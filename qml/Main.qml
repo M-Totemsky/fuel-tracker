@@ -80,17 +80,27 @@ ApplicationWindow {
             }
         }
 
-        // Eingabeformular
-        Rectangle {
-            id: formCard
+        // Eingabeformular (scrollbar, damit bei geöffneter Tastatur
+        // alle Felder + "Speichern"-Button erreichbar sind)
+        Flickable {
+            id: formScroll
             Layout.fillWidth: true
-            Layout.preferredHeight: 330
-            color: "#262626"
-            radius: 10
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 12
-                spacing: 10
+            Layout.preferredHeight: 380
+            contentHeight: formCard.height
+            clip: true
+            interactive: true
+            boundsBehavior: Flickable.StopAtBounds
+
+            Rectangle {
+                id: formCard
+                width: formScroll.width
+                height: 360
+                color: "#262626"
+                radius: 10
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 12
+                    spacing: 10
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -181,6 +191,7 @@ ApplicationWindow {
                     }
                 }
             }
+        }
         }
 
         // Verlauf

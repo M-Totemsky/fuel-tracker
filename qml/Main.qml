@@ -82,19 +82,16 @@ ApplicationWindow {
 
         // Eingabeformular (scrollbar, damit bei geöffneter Tastatur
         // alle Felder + "Speichern"-Button erreichbar sind)
-        Flickable {
+        ScrollView {
             id: formScroll
             Layout.fillWidth: true
-            Layout.preferredHeight: 380
-            contentHeight: formCard.height
+            Layout.preferredHeight: 400
             clip: true
-            interactive: true
-            boundsBehavior: Flickable.StopAtBounds
 
             Rectangle {
                 id: formCard
-                width: formScroll.width
-                height: 360
+                width: formScroll.availableWidth
+                height: 380
                 color: "#262626"
                 radius: 10
                 ColumnLayout {

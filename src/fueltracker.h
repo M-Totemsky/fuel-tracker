@@ -5,6 +5,7 @@
 #include <QDateTime>
 #include <QSqlDatabase>
 #include <QVariantList>
+#include <QStringList>
 
 class FuelTracker : public QObject
 {
@@ -14,19 +15,30 @@ class FuelTracker : public QObject
     Q_PROPERTY(QString lastEntrySummary READ lastEntrySummary NOTIFY dataChanged)
     Q_PROPERTY(int entryCount READ entryCount NOTIFY dataChanged)
     Q_PROPERTY(QVariantList entries READ entries NOTIFY dataChanged)
+    Q_PROPERTY(QString unit READ unit NOTIFY settingsChanged)
+    Q_PROPERTY(QString currency READ currency NOTIFY settingsChanged)
+    Q_PROPERTY(QStringList units READ units CONSTANT)
+    Q_PROPERTY(QStringList currencies READ currencies CONSTANT)
 
 public:
     explicit FuelTracker(QObject *parent = nullptr);
 
-    double lastConsumption() const;       // l/100km
+    double lastConsumption() const;       // aktuelle Einheit
     double lastCostPerKm() const;         // €/km (Nachkommastellen)
-    QString lastEntrySummary() const;     // z. B. "5,4 l/100km · 0,12 €/km"
+    QString lastEntrySummary() const;
     int entryCount() const;
 
+    QString unit() const;                 // "Liter" | "Gallonen"
+    QString currency() const;             // "EUR" | "USD" | "GBP"
+    QStringList units() const;
+    QStringList currencies() const;
+
+    Q_INVOKABLE void setUnit(const QString &unit);
+    Q_INVOKABLE void setCurrency(const QString &currency);
     Q_INVOKABLE bool addEntry(const QDateTime &date,
+                              double amount,      // Liter oder Gallonen je nach unit
                               double km,
-                              double liters,
-                              double pricePerLiter,
+                              double pricePerUnit, // Preis je Liter/Gallone
                               bool fullTank);
     Q_INVOKABLE void clearAll();
 
@@ -34,9 +46,12 @@ public:
 
 signals:
     void dataChanged();
+    void settingsChanged();
 
 private:
     void openDatabase();
+    void loadSettings();
+    void saveSettings();
     void recompute();
 
     QSqlDatabase m_db;
@@ -44,6 +59,8 @@ private:
     double m_lastCostPerKm = 0.0;
     int m_entryCount = 0;
     QString m_lastSummary;
+    QString m_unit = QStringLiteral("Liter");
+    QString m_currency = QStringLiteral("EUR");
 };
 
 #endif // FUELTRACKER_H

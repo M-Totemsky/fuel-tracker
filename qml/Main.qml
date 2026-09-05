@@ -13,17 +13,38 @@ ApplicationWindow {
     // Prio: kleine, klare Einstiegsoberfläche
     header: ToolBar {
         background: Rectangle { color: "#2b2b2b" }
+        height: 56
         RowLayout {
             anchors.fill: parent
             anchors.leftMargin: 12
-            width: parent.width
+            anchors.rightMargin: 12
             Label {
                 text: "Fuel Tracker"
                 color: "#ffffff"
-                font.pixelSize: 24
+                font.pixelSize: 20
                 font.bold: true
             }
             Item { Layout.fillWidth: true }
+            ComboBox {
+                id: unitBox
+                Layout.preferredWidth: 120
+                model: fuelTracker.units
+                currentIndex: {
+                    var i = fuelTracker.units.indexOf(fuelTracker.unit)
+                    return i < 0 ? 0 : i
+                }
+                onActivated: fuelTracker.setUnit(currentText)
+            }
+            ComboBox {
+                id: curBox
+                Layout.preferredWidth: 90
+                model: fuelTracker.currencies
+                currentIndex: {
+                    var i = fuelTracker.currencies.indexOf(fuelTracker.currency)
+                    return i < 0 ? 0 : i
+                }
+                onActivated: fuelTracker.setCurrency(currentText)
+            }
         }
     }
 
@@ -93,19 +114,24 @@ ApplicationWindow {
                         placeholderText: "z. B. 124350"
                     }
                 }
-                // Liter
+                // Menge (Einheit abhängig)
                 RowLayout {
-                    Label { text: "Liter"; color: "#ffffff"; Layout.preferredWidth: 110 }
+                    Label { text: fuelTracker.unit; color: "#ffffff"; Layout.preferredWidth: 110 }
                     TextField {
                         id: litersField
                         Layout.fillWidth: true
                         inputMethodHints: Qt.ImhFormattedNumbersOnly
-                        placeholderText: "z. B. 42,5"
+                        placeholderText: fuelTracker.unit === "Gallonen" ? "z. B. 10,5" : "z. B. 42,5"
                     }
                 }
-                // Preis/Liter
+                // Preis/Einheit
                 RowLayout {
-                    Label { text: "€/Liter"; color: "#ffffff"; Layout.preferredWidth: 110 }
+                    Label {
+                        text: fuelTracker.currency === "USD" ? "$/" + fuelTracker.unit
+                            : fuelTracker.currency === "GBP" ? "£/" + fuelTracker.unit
+                            : "€/" + fuelTracker.unit
+                        color: "#ffffff"; Layout.preferredWidth: 110
+                    }
                     TextField {
                         id: priceField
                         Layout.fillWidth: true
@@ -181,7 +207,7 @@ ApplicationWindow {
                     anchors.margins: 8
                     Label { text: modelData.date.slice(0, 10); color: "#ffffff" }
                     Item { Layout.fillWidth: true }
-                    Label { text: modelData.liters.toFixed(1) + " l"; color: "#dddddd" }
+                    Label { text: modelData.amount.toFixed(1) + " " + modelData.amountUnit; color: "#dddddd" }
                     Label { text: modelData.km.toFixed(0) + " km"; color: "#dddddd" }
                 }
             }

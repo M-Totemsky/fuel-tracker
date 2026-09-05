@@ -1,0 +1,15 @@
+{
+    "name": "fuel-tracker",
+    "description": "Tankbelegung und Kosten übersichtlich erfassen, Verbrauch (l/100km) und Kosten (€/km) automatisch berechnen.",
+    "architecture": "@CLICK_ARCH@",
+    "hooks": {
+        "fuel-tracker": {
+            "apparmor": "apparmor.json",
+            "desktop": "fuel-tracker.desktop"
+        }
+    },
+    "framework": "$ENV{CLICK_FRAMEWORK}",
+    "maintainer": "sepp <sepp@local>",
+    "title": "Fuel Tracker",
+    "version": "0.1.2"
+}

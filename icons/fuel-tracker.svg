@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect x="4" y="4" width="120" height="120" rx="22" fill="#2f6f4f"/>
+  <g fill="#ffffff">
+    <!-- Tanksäule (Zapfpistole) -->
+    <rect x="38" y="46" width="24" height="48" rx="6"/>
+    <rect x="30" y="56" width="12" height="14" rx="3"/>
+    <rect x="66" y="58" width="22" height="10" rx="4"/>
+    <rect x="82" y="52" width="8" height="16" rx="3"/>
+    <!-- Dezimal / Anzeige -->
+    <rect x="42" y="54" width="16" height="8" rx="2" fill="#2f6f4f"/>
+  </g>
+  <circle cx="36" cy="94" r="4" fill="#ffffff"/>
+</svg>

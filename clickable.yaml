@@ -1,0 +1,8 @@
+builder: "cmake"
+framework: "ubuntu-touch-24.04-1.x"
+
+# Dev dependencies installed inside the clickable build container.
+# SQLite is used from C++ (QSqlDatabase), so we need the qt5 sql sqlite pkg.
+dependencies_target:
+  - "qtdeclarative5-dev"
+  - "libqt5sql5-sqlite"

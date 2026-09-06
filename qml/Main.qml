@@ -77,6 +77,7 @@ ApplicationWindow {
         Rectangle {
             id: formCard
             Layout.fillWidth: true
+            Layout.preferredHeight: 340
             color: "#262626"
             radius: 10
             ColumnLayout {

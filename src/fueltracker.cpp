@@ -368,7 +368,8 @@ int FuelTracker::addVehicle(const QString &name, int fuelTypeIndex)
     const QString trimmed = name.trimmed();
     if (trimmed.isEmpty()) return -1;
     QStringList types = fuelTypes();
-    if (fuelTypeIndex < 0 || fuelTypeIndex >= types.size()) return -1;
+    // Absicherung: ungültiger Index (z. B. -1) → erstes Element
+    if (fuelTypeIndex < 0 || fuelTypeIndex >= types.size()) fuelTypeIndex = 0;
 
     QSqlQuery q(m_db);
     q.prepare(QStringLiteral("INSERT INTO vehicles (name, fuel_type) VALUES (?, ?)"));
@@ -401,12 +402,6 @@ bool FuelTracker::renameVehicle(int id, const QString &name)
 
 bool FuelTracker::deleteVehicle(int id)
 {
-    QSqlQuery q(m_db);
-    q.exec(QStringLiteral("SELECT COUNT(*) FROM vehicles"));
-    int count = 0;
-    if (q.next()) count = q.value(0).toInt();
-    if (count <= 1) return false;   // letztes Fahrzeug darf nicht gelöscht werden
-
     QSqlQuery del(m_db);
     del.prepare(QStringLiteral("DELETE FROM entries WHERE vehicle_id = ?"));
     del.addBindValue(id);
@@ -414,6 +409,10 @@ bool FuelTracker::deleteVehicle(int id)
     del.prepare(QStringLiteral("DELETE FROM vehicles WHERE id = ?"));
     del.addBindValue(id);
     if (!del.exec()) return false;
+
+    // Kein Fahrzeug mehr übrig → automatisch wieder das Default-Fahrzeug anlegen,
+    // damit die App immer ein gültiges Fahrzeug hat.
+    ensureDefaultVehicle();
 
     if (id == m_activeVehicleId) {
         setActiveVehicleId(firstVehicleId());

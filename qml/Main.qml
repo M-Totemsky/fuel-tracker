@@ -48,30 +48,40 @@ ApplicationWindow {
     header: ToolBar {
         background: Rectangle { color: "#2b2b2b" }
         height: 56
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 8
-            anchors.rightMargin: 8
-            Label {
-                text: "Fuel Tracker"
-                color: "#ffffff"
-                font.pixelSize: 18
-                font.bold: true
+RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 8
+                anchors.rightMargin: 8
+                Label {
+                    text: "Fuel Tracker"
+                    color: "#ffffff"
+                    font.pixelSize: 18
+                    font.bold: true
+                }
+                Item { Layout.fillWidth: true }
+                ToolButton {
+                    id: vehicleBtn
+                    text: fuelTracker.activeVehicleName
+                    font.pixelSize: 15
+                    onClicked: vehiclePopup.open()
+                    background: Rectangle {
+                        color: "#3d7ea6"
+                        radius: 6
+                    }
+                    contentItem: Label {
+                        text: fuelTracker.activeVehicleName
+                        color: "#ffffff"
+                        font.pixelSize: 15
+                    }
+                }
+                ToolButton {
+                    id: settingsBtn
+                    objectName: "settingsBtn"
+                    text: fuelTracker.strings["settings"]
+                    font.pixelSize: 15
+                    onClicked: settingsPopup.open()
+                }
             }
-            Item { Layout.fillWidth: true }
-            ToolButton {
-                id: vehicleBtn
-                text: fuelTracker.activeVehicleName
-                font.pixelSize: 15
-                onClicked: vehiclePopup.open()
-            }
-            ToolButton {
-                id: settingsBtn
-                text: fuelTracker.strings["settings"]
-                font.pixelSize: 15
-                onClicked: settingsPopup.open()
-            }
-        }
     }
 
     // Schneller Fahrzeugwechsel direkt unter der Kopfzeile
@@ -120,21 +130,75 @@ ApplicationWindow {
         modal: true
         dim: true
         focus: true
-        x: Math.round((root.width - width) / 2)
-        y: Math.round((root.height - height) / 2)
-        width: Math.min(root.width - 40, 420)
-        height: Math.min(settingsScroll.Layout.preferredHeight + 76, root.height - 40)
-        padding: 16
-        background: Rectangle { color: "#333333"; radius: 10 }
+        x: 0
+        y: root.header.height
+        width: root.width
+        height: root.height - root.header.height
+        padding: 12
+        background: Rectangle { color: "#2b2b2b" }
 
         ColumnLayout {
             anchors.fill: parent
-            spacing: 10
+            spacing: 8
+
+            // Kopfzeile: Titel + Schließen
+            RowLayout {
+                Label {
+                    text: fuelTracker.strings["settings"]
+                    color: "#ffffff"
+                    font.pixelSize: 18
+                    font.bold: true
+                }
+                Item { Layout.fillWidth: true }
+                ToolButton {
+                    text: "✕"
+                    onClicked: settingsPopup.close()
+                    contentItem: Label {
+                        text: "✕"
+                        color: "#ffffff"
+                        font.pixelSize: 16
+                    }
+                }
+            }
+
+            // FIXIERTE Zeile zum Anlegen neuer Fahrzeuge: bleibt bei offener
+            // Tastatur sichtbar, weil sie am oberen Rand der Seite sitzt.
+            RowLayout {
+                spacing: 6
+                TextField {
+                    id: newVehicleField
+                    objectName: "newVehicleField"
+                    Layout.fillWidth: true
+                    placeholderText: fuelTracker.strings["name"]
+                    color: "#ffffff"
+                    inputMethodHints: Qt.ImhNoPredictiveText
+                }
+                ComboBox {
+                    id: fuelTypeCombo
+                    objectName: "fuelTypeCombo"
+                    Layout.preferredWidth: 120
+                    model: fuelTracker.fuelTypeOptions
+                    currentIndex: 0
+                }
+                Button {
+                    objectName: "addVehicleButton"
+                    Layout.preferredWidth: 56
+                    Layout.preferredHeight: 40
+                    text: "+"
+                    font.pixelSize: 20
+                    onClicked: {
+                        if (fuelTracker.addVehicle(newVehicleField.text,
+                                                  fuelTypeCombo.currentIndex) >= 0) {
+                            newVehicleField.text = ""
+                        }
+                    }
+                }
+            }
 
             ScrollView {
                 id: settingsScroll
                 Layout.fillWidth: true
-                Layout.preferredHeight: Math.min(settingsCol.implicitHeight, root.height - 240)
+                Layout.fillHeight: true
                 clip: true
                 contentWidth: availableWidth
                 ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
@@ -144,60 +208,7 @@ ApplicationWindow {
                     width: settingsScroll.availableWidth
                     spacing: 10
 
-                    // Reihenfolge: 1. Sprache, 2. Währung, 3. Einheit
-                    Label { text: fuelTracker.strings["languageName"]; color: "#ffffff" }
-                    ComboBox {
-                        Layout.fillWidth: true
-                        model: fuelTracker.languages
-                        currentIndex: fuelTracker.languages.indexOf(fuelTracker.language)
-                        onActivated: fuelTracker.setLanguage(currentText)
-                    }
-
-                    Label { text: fuelTracker.strings["currencyName"]; color: "#ffffff" }
-                    ComboBox {
-                        Layout.fillWidth: true
-                        model: fuelTracker.currencies
-                        currentIndex: fuelTracker.currencies.indexOf(fuelTracker.currency)
-                        onActivated: fuelTracker.setCurrency(currentText)
-                    }
-
-                    Label { text: fuelTracker.strings["unitName"]; color: "#ffffff" }
-                    ComboBox {
-                        Layout.fillWidth: true
-                        model: fuelTracker.unitOptions
-                        currentIndex: fuelTracker.units.indexOf(fuelTracker.unit)
-                        onActivated: function(i) { fuelTracker.setUnit(fuelTracker.units[i]) }
-                    }
-
                     Label { text: fuelTracker.strings["vehicles"]; color: "#ffffff" }
-
-                    // Neues Fahrzeug anlegen
-                    RowLayout {
-                        spacing: 6
-                        TextField {
-                            id: newVehicleField
-                            Layout.fillWidth: true
-                            placeholderText: fuelTracker.strings["name"]
-                            color: "#ffffff"
-                            inputMethodHints: Qt.ImhNoPredictiveText
-                        }
-                        ComboBox {
-                            id: fuelTypeCombo
-                            Layout.preferredWidth: 110
-                            model: fuelTracker.fuelTypeOptions
-                            currentIndex: 0
-                        }
-                        Button {
-                            text: "+"
-                            font.pixelSize: 18
-                            onClicked: {
-                                if (fuelTracker.addVehicle(newVehicleField.text,
-                                                          fuelTypeCombo.currentIndex) >= 0) {
-                                    newVehicleField.text = ""
-                                }
-                            }
-                        }
-                    }
 
                     // Fahrzeugliste mit Umbenennen/Löschen
                     Repeater {
@@ -237,7 +248,6 @@ ApplicationWindow {
                                 Button {
                                     text: fuelTracker.strings["deleteVehicle"]
                                     font.pixelSize: 12
-                                    enabled: fuelTracker.vehicles.length > 1
                                     onClicked: {
                                         root.pendingVehicleId = modelData.id
                                         deleteConfirmPopup.open()
@@ -246,14 +256,33 @@ ApplicationWindow {
                             }
                         }
                     }
-                }
-            }
 
-            Button {
-                Layout.fillWidth: true
-                text: fuelTracker.strings["close"]
-                highlighted: true
-                onClicked: settingsPopup.close()
+                    Label { text: fuelTracker.strings["languageName"]; color: "#ffffff" }
+                    ComboBox {
+                        Layout.fillWidth: true
+                        model: fuelTracker.languages
+                        currentIndex: fuelTracker.languages.indexOf(fuelTracker.language)
+                        onActivated: fuelTracker.setLanguage(currentText)
+                    }
+
+                    Label { text: fuelTracker.strings["currencyName"]; color: "#ffffff" }
+                    ComboBox {
+                        Layout.fillWidth: true
+                        model: fuelTracker.currencies
+                        currentIndex: fuelTracker.currencies.indexOf(fuelTracker.currency)
+                        onActivated: fuelTracker.setCurrency(currentText)
+                    }
+
+                    Label { text: fuelTracker.strings["unitName"]; color: "#ffffff" }
+                    ComboBox {
+                        Layout.fillWidth: true
+                        model: fuelTracker.unitOptions
+                        currentIndex: fuelTracker.units.indexOf(fuelTracker.unit)
+                        onActivated: function(i) { fuelTracker.setUnit(fuelTracker.units[i]) }
+                    }
+
+                    Item { Layout.fillHeight: true }
+                }
             }
         }
     }

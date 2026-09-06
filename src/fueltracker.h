@@ -14,6 +14,7 @@ class FuelTracker : public QObject
     Q_PROPERTY(double lastCostPerKm READ lastCostPerKm NOTIFY dataChanged)
     Q_PROPERTY(QString lastEntrySummary READ lastEntrySummary NOTIFY dataChanged)
     Q_PROPERTY(int entryCount READ entryCount NOTIFY dataChanged)
+    Q_PROPERTY(double totalCost READ totalCost NOTIFY dataChanged)
     Q_PROPERTY(QVariantList entries READ entries NOTIFY dataChanged)
     Q_PROPERTY(QString unit READ unit NOTIFY settingsChanged)
     Q_PROPERTY(QString currency READ currency NOTIFY settingsChanged)
@@ -37,6 +38,8 @@ public:
     QString language() const;             // "Deutsch" | "English"
     Q_INVOKABLE QString unitLabel() const;      // Einheit in aktueller Sprache
     Q_INVOKABLE QString ls(const QString &key) const; // übersetzter Text (de/en)
+    Q_INVOKABLE QString distanceUnit() const;     // "km" (Liter) | "mi" (Gallonen)
+    double totalCost() const;          // Summe aller Ausgaben
     QStringList unitOptions() const;      // Einheiten als Liste in aktueller Sprache
     QStringList languages() const;        // verfügbare Sprachen
     QVariantMap strings() const;          // alle Übersetzungen (Key→Text)
@@ -76,6 +79,7 @@ private:
     QString m_unit = QStringLiteral("Liter");
     QString m_currency = QStringLiteral("EUR");
     QString m_language = QStringLiteral("Deutsch");
+    double m_totalCost = 0.0;
 };
 
 #endif // FUELTRACKER_H

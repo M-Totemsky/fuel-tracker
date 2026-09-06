@@ -15,6 +15,34 @@ ApplicationWindow {
         return p.length === 3 ? p[2] + "." + p[1] + "." + p[0] : iso
     }
 
+    function fmtNum(x, digits) {
+        var s = x.toFixed(digits)
+        return fuelTracker.language === "English" ? s : s.replace('.', ',')
+    }
+
+    function fmtMoney(x) {
+        return fuelTracker.currencySymbol(fuelTracker.currency) + " " + fmtNum(x, 2)
+    }
+
+    function parseDate(text) {
+        var t = text.trim()
+        if (t.length === 0) { return new Date() }
+        var parts = t.split(/[-./]/)
+        if (parts.length !== 3) { return null }
+        var y, mo, da
+        if (parts[0].length === 4) {        // JJJJ-MM-TT / YYYY-MM-DD
+            y = parseInt(parts[0], 10)
+            mo = parseInt(parts[1], 10) - 1
+            da = parseInt(parts[2], 10)
+        } else {                            // TT-MM-JJJJ / DD-MM-YYYY
+            da = parseInt(parts[0], 10)
+            mo = parseInt(parts[1], 10) - 1
+            y = parseInt(parts[2], 10)
+        }
+        if (isNaN(y) || isNaN(mo) || isNaN(da)) { return null }
+        return new Date(y, mo, da)
+    }
+
     header: ToolBar {
         background: Rectangle { color: "#2b2b2b" }
         height: 56
@@ -98,15 +126,26 @@ ApplicationWindow {
         // Status (kompakt, direkt über dem Formular)
         Rectangle {
             Layout.fillWidth: true
-            height: 44
+            height: 58
             color: "#313131"
             radius: 8
-            Label {
+            Column {
                 anchors.centerIn: parent
-                text: fuelTracker.lastEntrySummary
-                color: "#ffffff"
-                font.pixelSize: 16
-                horizontalAlignment: Text.AlignHCenter
+                spacing: 2
+                Label {
+                    text: fuelTracker.lastEntrySummary
+                    color: "#ffffff"
+                    font.pixelSize: 16
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                Label {
+                    text: fuelTracker.strings["totalSpend"] + ": " + root.fmtMoney(fuelTracker.totalCost)
+                    color: "#aaaaaa"
+                    font.pixelSize: 14
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
             }
         }
 
@@ -141,12 +180,15 @@ ApplicationWindow {
                 }
 
                 RowLayout {
-                    Label { text: fuelTracker.strings["odometer"]; color: "#ffffff"; Layout.preferredWidth: 90 }
+                    Label {
+                        text: fuelTracker.unit === "Gallonen" ? fuelTracker.strings["odometerMi"] : fuelTracker.strings["odometerKm"]
+                        color: "#ffffff"; Layout.preferredWidth: 90
+                    }
                     TextField {
                         id: kmField
                         Layout.fillWidth: true
                         inputMethodHints: Qt.ImhDigitsOnly
-                        placeholderText: "z. B. 124350"
+                        placeholderText: fuelTracker.language === "English" ? "e.g. 124350" : "z. B. 124350"
                     }
                 }
 
@@ -159,7 +201,9 @@ ApplicationWindow {
                         id: litersField
                         Layout.fillWidth: true
                         inputMethodHints: Qt.ImhFormattedNumbersOnly
-                        placeholderText: fuelTracker.unit === "Gallonen" ? "z. B. 10,5" : "z. B. 42,5"
+                        placeholderText: fuelTracker.language === "English"
+                            ? (fuelTracker.unit === "Gallonen" ? "e.g. 10.5" : "e.g. 42.5")
+                            : (fuelTracker.unit === "Gallonen" ? "z. B. 10,5" : "z. B. 42,5")
                     }
                 }
 
@@ -173,7 +217,7 @@ ApplicationWindow {
                         id: priceField
                         Layout.fillWidth: true
                         inputMethodHints: Qt.ImhFormattedNumbersOnly
-                        placeholderText: "z. B. 1,819"
+                        placeholderText: fuelTracker.language === "English" ? "e.g. 1.819" : "z. B. 1,819"
                     }
                 }
 
@@ -195,28 +239,8 @@ ApplicationWindow {
                         var price = parseFloat(priceField.text.replace(',', '.'))
                         if (isNaN(km) || isNaN(lit) || isNaN(price)) { return }
 
-                        var dtext = dateField.text.trim()
-                        var dt
-                        if (dtext.length === 0) {
-                            dt = new Date()
-                        } else {
-                            var y, mo, da, parts, p
-                            if (dtext.indexOf('-') >= 0) {
-                                parts = dtext.split('-')
-                                if (parts.length !== 3) { return }
-                                y = parseInt(parts[0], 10)
-                                mo = parseInt(parts[1], 10) - 1
-                                da = parseInt(parts[2], 10)
-                            } else {
-                                p = dtext.split('.')
-                                if (p.length !== 3) { return }
-                                da = parseInt(p[0], 10)
-                                mo = parseInt(p[1], 10) - 1
-                                y = parseInt(p[2], 10)
-                            }
-                            if (isNaN(y) || isNaN(mo) || isNaN(da)) { return }
-                            dt = new Date(y, mo, da)
-                        }
+                        var dt = root.parseDate(dateField.text)
+                        if (dt === null) { return }
 
                         if (fuelTracker.addEntry(dt, km, lit, price, fullSwitch.checked)) {
                             dateField.text = Qt.formatDateTime(new Date(), "dd.MM.yyyy")
@@ -258,8 +282,9 @@ ApplicationWindow {
                         anchors.leftMargin: 10
                         Label { text: root.fmtDate(modelData.date); color: "#ffffff" }
                         Item { Layout.fillWidth: true }
-                        Label { text: modelData.amount.toFixed(1) + " " + modelData.amountUnit; color: "#dddddd" }
-                        Label { text: modelData.km.toFixed(0) + " km"; color: "#dddddd" }
+                        Label { text: root.fmtNum(modelData.amount, 1) + " " + modelData.amountUnit; color: "#dddddd" }
+                        Label { text: root.fmtNum(modelData.km, 0) + " " + modelData.distUnit; color: "#dddddd" }
+                        Label { text: root.fmtMoney(modelData.cost); color: "#9ccc9c" }
                         ToolButton {
                             text: "✕"
                             onClicked: fuelTracker.deleteEntry(modelData.id)

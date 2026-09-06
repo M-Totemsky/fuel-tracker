@@ -34,7 +34,8 @@ struct StringEntry { const char *key; const char *de; const char *en; };
 static const StringEntry kStrings[] = {
     { "date",       "Datum",                   "Date" },
     { "today",      "Heute",                   "Today" },
-    { "odometer",   "km-Stand",                "Odometer (km)" },
+    { "odometerKm", "km-Stand",                "Odometer (km)" },
+    { "odometerMi", "Meilenstand",             "Odometer (mi)" },
     { "fullTank",   "Voll getankt",            "Full tank" },
     { "saveEntry",  "Eintrag speichern",       "Save entry" },
     { "history",    "Verlauf",                 "History" },
@@ -44,6 +45,7 @@ static const StringEntry kStrings[] = {
     { "needMore",   "Weitere Tankung nötig",   "Another full tank needed" },
     { "unitLiter",  "Liter",                   "Liters" },
     { "unitGallon", "Gallonen",                "Gallons" },
+    { "totalSpend", "Gesamtausgaben",          "Total spent" },
     { "settings",   "Einstellungen",           "Settings" },
     { "unitName",   "Einheit",                 "Unit" },
     { "currencyName", "Währung",               "Currency" },
@@ -245,6 +247,14 @@ void FuelTracker::recompute()
         m_entryCount = q.value(0).toInt();
     }
 
+    q.exec(QStringLiteral("SELECT COALESCE(SUM(liters * price_per_liter), 0) FROM entries"));
+    if (q.next()) {
+        m_totalCost = q.value(0).toDouble();
+    }
+
+    const QLocale loc = (m_language == QStringLiteral("English")) ? QLocale::English
+                                                                  : QLocale::German;
+
     // Voll→Voll: neuester voller Eintrag minus vorheriger voller Eintrag.
     QSqlQuery v(m_db);
     v.exec(QStringLiteral(
@@ -284,23 +294,33 @@ void FuelTracker::recompute()
     QString sym = currencySymbol(m_currency);
     if (m_unit == QStringLiteral("Liter")) {
         m_lastConsumption = l100km;
-        m_lastCostPerKm = (lit2 * price2) / diffKm;               // €/km
-        m_lastSummary = QStringLiteral("%1 l/100km · %2 %3/km")
-                            .arg(l100km, 0, 'f', 1)
-                            .arg(m_lastCostPerKm, 0, 'f', 2)
-                            .arg(sym);
+        m_lastCostPerKm = (lit2 * price2) / diffKm;               // Währung/km
+        m_lastSummary = QStringLiteral("%1 l/100km · %2 %3/%4")
+                            .arg(loc.toString(l100km, 'f', 1))
+                            .arg(loc.toString(m_lastCostPerKm, 'f', 2))
+                            .arg(sym)
+                            .arg(QStringLiteral("km"));
     } else {
-        // Gallonen: Verbrauch als mpg (Miles per Gallon)
+        // Gallonen: Verbrauch als mpg (Miles per Gallon), Kosten je Meile
         double gallons = lit2 / LITER_PER_GALLON;
         double miles = diffKm / KM_PER_MILE;
         double mpg = gallons > 0 ? miles / gallons : 0.0;
         m_lastConsumption = mpg;
-        m_lastCostPerKm = (lit2 * price2) / diffKm;              // Währung/km
-        m_lastSummary = QStringLiteral("%1 mpg · %2 %3/km")
-                            .arg(mpg, 0, 'f', 1)
-                            .arg(m_lastCostPerKm, 0, 'f', 2)
-                            .arg(sym);
+        m_lastCostPerKm = ((lit2 * price2) / diffKm) / KM_PER_MILE; // Währung/mi
+        m_lastSummary = QStringLiteral("%1 mpg · %2 %3/%4")
+                            .arg(loc.toString(mpg, 'f', 1))
+                            .arg(loc.toString(m_lastCostPerKm, 'f', 2))
+                            .arg(sym)
+                            .arg(QStringLiteral("mi"));
     }
+}
+
+double FuelTracker::totalCost() const { return m_totalCost; }
+
+QString FuelTracker::distanceUnit() const
+{
+    return m_unit == QStringLiteral("Gallonen") ? QStringLiteral("mi")
+                                                : QStringLiteral("km");
 }
 
 double FuelTracker::lastConsumption() const { return m_lastConsumption; }
@@ -323,13 +343,17 @@ bool FuelTracker::addEntry(const QDateTime &date,
     double pricePerLiter = (m_unit == QStringLiteral("Gallonen"))
                            ? pricePerUnit / LITER_PER_GALLON
                            : pricePerUnit;
+    // Distanz: Bei Gallonen gibt der Nutzer Meilen ein → intern km
+    double kmStored = (m_unit == QStringLiteral("Gallonen"))
+                      ? km * KM_PER_MILE
+                      : km;
 
     QSqlQuery q(m_db);
     q.prepare(QStringLiteral(
         "INSERT INTO entries (date, km, liters, price_per_liter, full_tank) "
         "VALUES (?, ?, ?, ?, ?)"));
     q.addBindValue(date.toString(Qt::ISODateWithMs));
-    q.addBindValue(km);
+    q.addBindValue(kmStored);
     q.addBindValue(liters);
     q.addBindValue(pricePerLiter);
     q.addBindValue(fullTank ? 1 : 0);
@@ -350,22 +374,28 @@ QVariantList FuelTracker::entries() const
     q.exec(QStringLiteral(
         "SELECT id, date, km, liters, price_per_liter, full_tank FROM entries "
         "ORDER BY id DESC"));
+    const bool gallons = m_unit == QStringLiteral("Gallonen");
     while (q.next()) {
+        double kmStored = q.value(2).toDouble();
         double liters = q.value(3).toDouble();
         double pricePerLiter = q.value(4).toDouble();
         QVariantMap m;
         m.insert(QStringLiteral("id"), q.value(0).toInt());
         m.insert(QStringLiteral("date"), q.value(1).toString());
-        m.insert(QStringLiteral("km"), q.value(2).toDouble());
-        if (m_unit == QStringLiteral("Gallonen")) {
+        if (gallons) {
             m.insert(QStringLiteral("amount"), liters / LITER_PER_GALLON);
             m.insert(QStringLiteral("amountUnit"), QStringLiteral("gal"));
             m.insert(QStringLiteral("price"), pricePerLiter * LITER_PER_GALLON);
+            m.insert(QStringLiteral("km"), kmStored / KM_PER_MILE);
+            m.insert(QStringLiteral("distUnit"), QStringLiteral("mi"));
         } else {
             m.insert(QStringLiteral("amount"), liters);
             m.insert(QStringLiteral("amountUnit"), QStringLiteral("l"));
             m.insert(QStringLiteral("price"), pricePerLiter);
+            m.insert(QStringLiteral("km"), kmStored);
+            m.insert(QStringLiteral("distUnit"), QStringLiteral("km"));
         }
+        m.insert(QStringLiteral("cost"), liters * pricePerLiter);
         m.insert(QStringLiteral("fullTank"), q.value(5).toBool());
         list.append(m);
     }

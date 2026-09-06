@@ -48,6 +48,17 @@ void FuelTracker::openDatabase()
         ")"));
     if (q.lastError().isValid()) {
         qWarning() << "CREATE TABLE entries failed:" << q.lastError().text();
+        return;
+    }
+
+    // Einmalige Reparatur: In 0.1.3/0.1.4 waren km und Liter in addEntry
+    // vertauscht (km-Stand wurden als Liter gespeichert und umgekehrt).
+    // Betroffene Zeilen erkennen wir an unrealistisch hohem Literwert.
+    q.exec(QStringLiteral(
+        "UPDATE entries SET km = liters, liters = km "
+        "WHERE liters > 200 AND km < 200"));
+    if (q.lastError().isValid()) {
+        qWarning() << "Data repair failed:" << q.lastError().text();
     }
 
     // Settings-Tabelle für Einheit/Währung
@@ -200,8 +211,8 @@ QString FuelTracker::lastEntrySummary() const { return m_lastSummary; }
 int FuelTracker::entryCount() const { return m_entryCount; }
 
 bool FuelTracker::addEntry(const QDateTime &date,
-                           double amount,
                            double km,
+                           double amount,
                            double pricePerUnit,
                            bool fullTank)
 {

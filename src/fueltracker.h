@@ -36,8 +36,8 @@ public:
     Q_INVOKABLE void setUnit(const QString &unit);
     Q_INVOKABLE void setCurrency(const QString &currency);
     Q_INVOKABLE bool addEntry(const QDateTime &date,
-                              double amount,      // Liter oder Gallonen je nach unit
                               double km,
+                              double amount,     // Liter oder Gallonen je nach unit
                               double pricePerUnit, // Preis je Liter/Gallone
                               bool fullTank);
     Q_INVOKABLE void clearAll();

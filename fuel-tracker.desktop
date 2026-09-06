@@ -2,7 +2,7 @@
 Name=Fuel Tracker
 Comment=Tankverbrauch und Kosten erfassen
 Exec=fuel-tracker
-Icon=icons/fuel-tracker.svg
+Icon=icons/fuel-tracker.png
 Terminal=false
 Type=Application
 X-Ubuntu-Touch=true

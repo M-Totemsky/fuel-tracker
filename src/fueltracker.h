@@ -24,6 +24,10 @@ class FuelTracker : public QObject
     Q_PROPERTY(QStringList currencies READ currencies CONSTANT)
     Q_PROPERTY(QStringList languages READ languages CONSTANT)
     Q_PROPERTY(QStringList unitOptions READ unitOptions CONSTANT)
+    Q_PROPERTY(QVariantList vehicles READ vehicles NOTIFY vehiclesChanged)
+    Q_PROPERTY(QString activeVehicleName READ activeVehicleName NOTIFY vehiclesChanged)
+    Q_PROPERTY(bool isElectric READ isElectric NOTIFY vehiclesChanged)
+    Q_PROPERTY(QStringList fuelTypeOptions READ fuelTypeOptions NOTIFY languageChanged)
 
 public:
     explicit FuelTracker(QObject *parent = nullptr);
@@ -52,24 +56,40 @@ public:
     Q_INVOKABLE QString currencySymbol(const QString &currency) const;
     Q_INVOKABLE bool addEntry(const QDateTime &date,
                               double km,
-                              double amount,     // Liter oder Gallonen je nach unit
-                              double pricePerUnit, // Preis je Liter/Gallone
+                              double amount,     // Liter/Gallonen oder kWh je Fahrzeug
+                              double pricePerUnit, // Preis je Liter/Gallone/kWh
                               bool fullTank);
     Q_INVOKABLE bool deleteEntry(int id);
     Q_INVOKABLE void clearAll();
 
     QVariantList entries() const;   // Q_PROPERTY: Liste für QML
 
+    QString activeVehicleName() const;
+    bool isElectric() const;                    // aktives Fahrzeug ist Elektro
+    QVariantList vehicles() const;              // Liste für QML (id/name/fuelType)
+    QStringList fuelTypes() const;              // Rohwerte (petrol/diesel/lpg/electric)
+    QStringList fuelTypeOptions() const;        // Antriebs-Arten in aktueller Sprache
+    QString fuelTypeLabel(const QString &code) const;
+    Q_INVOKABLE void setActiveVehicle(int id);
+    Q_INVOKABLE int addVehicle(const QString &name, int fuelTypeIndex);
+    Q_INVOKABLE bool renameVehicle(int id, const QString &name);
+    Q_INVOKABLE bool deleteVehicle(int id);
+
 signals:
     void dataChanged();
     void settingsChanged();
     void languageChanged();
+    void vehiclesChanged();
 
 private:
     void openDatabase();
     void loadSettings();
     void saveSettings();
     void recompute();
+    void ensureDefaultVehicle();
+    void loadActiveVehicle();
+    void setActiveVehicleId(int id);
+    int firstVehicleId() const;
 
     QSqlDatabase m_db;
     double m_lastConsumption = 0.0;
@@ -80,6 +100,9 @@ private:
     QString m_currency = QStringLiteral("EUR");
     QString m_language = QStringLiteral("Deutsch");
     double m_totalCost = 0.0;
+    int m_activeVehicleId = 0;
+    QString m_activeVehicleName;
+    QString m_fuelType = QStringLiteral("petrol");
 };
 
 #endif // FUELTRACKER_H

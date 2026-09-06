@@ -10,6 +10,8 @@ ApplicationWindow {
     title: "Fuel Tracker"
     color: "#1e1e1e"
 
+    property int pendingVehicleId: -1   // für Umbenennen/Löschen-Dialog
+
     function fmtDate(iso) {
         var p = iso.slice(0, 10).split('-')
         return p.length === 3 ? p[2] + "." + p[1] + "." + p[0] : iso
@@ -58,10 +60,57 @@ ApplicationWindow {
             }
             Item { Layout.fillWidth: true }
             ToolButton {
+                id: vehicleBtn
+                text: fuelTracker.activeVehicleName
+                font.pixelSize: 15
+                onClicked: vehiclePopup.open()
+            }
+            ToolButton {
                 id: settingsBtn
                 text: fuelTracker.strings["settings"]
                 font.pixelSize: 15
                 onClicked: settingsPopup.open()
+            }
+        }
+    }
+
+    // Schneller Fahrzeugwechsel direkt unter der Kopfzeile
+    Popup {
+        id: vehiclePopup
+        modal: true
+        dim: true
+        focus: true
+        x: 0
+        y: root.header.height
+        width: root.width
+        height: Math.min(vcCol.implicitHeight + 24, root.height - root.header.height - 20)
+        padding: 12
+        background: Rectangle { color: "#333333" }
+
+        ColumnLayout {
+            id: vcCol
+            anchors.fill: parent
+            spacing: 4
+
+            Label {
+                text: fuelTracker.strings["vehicles"]
+                color: "#aaaaaa"
+                font.pixelSize: 14
+            }
+
+            Repeater {
+                model: fuelTracker.vehicles
+                Button {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 44
+                    text: (modelData.isActive ? "✓ " : "") + modelData.name
+                          + "  ·  " + modelData.fuelTypeLabel
+                    font.pixelSize: 15
+                    onClicked: {
+                        fuelTracker.setActiveVehicle(modelData.id)
+                        vehiclePopup.close()
+                    }
+                }
             }
         }
     }
@@ -74,46 +123,227 @@ ApplicationWindow {
         x: Math.round((root.width - width) / 2)
         y: Math.round((root.height - height) / 2)
         width: Math.min(root.width - 40, 420)
-        height: col.implicitHeight + 32
+        height: Math.min(settingsScroll.Layout.preferredHeight + 76, root.height - 40)
         padding: 16
         background: Rectangle { color: "#333333"; radius: 10 }
 
         ColumnLayout {
-            id: col
             anchors.fill: parent
             spacing: 10
 
-            Label { text: fuelTracker.strings["unitName"]; color: "#ffffff" }
-            ComboBox {
+            ScrollView {
+                id: settingsScroll
                 Layout.fillWidth: true
-                model: fuelTracker.unitOptions
-                currentIndex: fuelTracker.units.indexOf(fuelTracker.unit)
-                onActivated: function(i) { fuelTracker.setUnit(fuelTracker.units[i]) }
-            }
+                Layout.preferredHeight: Math.min(settingsCol.implicitHeight, root.height - 240)
+                clip: true
+                contentWidth: availableWidth
+                ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
-            Label { text: fuelTracker.strings["currencyName"]; color: "#ffffff" }
-            ComboBox {
-                Layout.fillWidth: true
-                model: fuelTracker.currencies
-                currentIndex: fuelTracker.currencies.indexOf(fuelTracker.currency)
-                onActivated: fuelTracker.setCurrency(currentText)
-            }
+                ColumnLayout {
+                    id: settingsCol
+                    width: settingsScroll.availableWidth
+                    spacing: 10
 
-            Label { text: fuelTracker.strings["languageName"]; color: "#ffffff" }
-            ComboBox {
-                Layout.fillWidth: true
-                model: fuelTracker.languages
-                currentIndex: fuelTracker.languages.indexOf(fuelTracker.language)
-                onActivated: fuelTracker.setLanguage(currentText)
-            }
+                    // Reihenfolge: 1. Sprache, 2. Währung, 3. Einheit
+                    Label { text: fuelTracker.strings["languageName"]; color: "#ffffff" }
+                    ComboBox {
+                        Layout.fillWidth: true
+                        model: fuelTracker.languages
+                        currentIndex: fuelTracker.languages.indexOf(fuelTracker.language)
+                        onActivated: fuelTracker.setLanguage(currentText)
+                    }
 
-            Item { Layout.fillHeight: true }
+                    Label { text: fuelTracker.strings["currencyName"]; color: "#ffffff" }
+                    ComboBox {
+                        Layout.fillWidth: true
+                        model: fuelTracker.currencies
+                        currentIndex: fuelTracker.currencies.indexOf(fuelTracker.currency)
+                        onActivated: fuelTracker.setCurrency(currentText)
+                    }
+
+                    Label { text: fuelTracker.strings["unitName"]; color: "#ffffff" }
+                    ComboBox {
+                        Layout.fillWidth: true
+                        model: fuelTracker.unitOptions
+                        currentIndex: fuelTracker.units.indexOf(fuelTracker.unit)
+                        onActivated: function(i) { fuelTracker.setUnit(fuelTracker.units[i]) }
+                    }
+
+                    Label { text: fuelTracker.strings["vehicles"]; color: "#ffffff" }
+
+                    // Neues Fahrzeug anlegen
+                    RowLayout {
+                        spacing: 6
+                        TextField {
+                            id: newVehicleField
+                            Layout.fillWidth: true
+                            placeholderText: fuelTracker.strings["name"]
+                            color: "#ffffff"
+                            inputMethodHints: Qt.ImhNoPredictiveText
+                        }
+                        ComboBox {
+                            id: fuelTypeCombo
+                            Layout.preferredWidth: 110
+                            model: fuelTracker.fuelTypeOptions
+                            currentIndex: 0
+                        }
+                        Button {
+                            text: "+"
+                            font.pixelSize: 18
+                            onClicked: {
+                                if (fuelTracker.addVehicle(newVehicleField.text,
+                                                          fuelTypeCombo.currentIndex) >= 0) {
+                                    newVehicleField.text = ""
+                                }
+                            }
+                        }
+                    }
+
+                    // Fahrzeugliste mit Umbenennen/Löschen
+                    Repeater {
+                        model: fuelTracker.vehicles
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: 52
+                            color: modelData.isActive ? "#3a4a3a" : "#2a2a2a"
+                            radius: 6
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: 8
+                                Column {
+                                    spacing: 1
+                                    Label {
+                                        text: (modelData.isActive ? "✓ " : "") + modelData.name
+                                        color: "#ffffff"
+                                        font.pixelSize: 15
+                                        font.bold: true
+                                    }
+                                    Label {
+                                        text: modelData.fuelTypeLabel
+                                        color: "#999999"
+                                        font.pixelSize: 12
+                                    }
+                                }
+                                Item { Layout.fillWidth: true }
+                                Button {
+                                    text: fuelTracker.strings["renameVehicle"]
+                                    font.pixelSize: 12
+                                    onClicked: {
+                                        root.pendingVehicleId = modelData.id
+                                        renameNameField.text = modelData.name
+                                        renamePopup.open()
+                                    }
+                                }
+                                Button {
+                                    text: fuelTracker.strings["deleteVehicle"]
+                                    font.pixelSize: 12
+                                    enabled: fuelTracker.vehicles.length > 1
+                                    onClicked: {
+                                        root.pendingVehicleId = modelData.id
+                                        deleteConfirmPopup.open()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             Button {
                 Layout.fillWidth: true
                 text: fuelTracker.strings["close"]
                 highlighted: true
                 onClicked: settingsPopup.close()
+            }
+        }
+    }
+
+    // Umbenennen-Dialog
+    Popup {
+        id: renamePopup
+        modal: true
+        dim: true
+        focus: true
+        x: Math.round((root.width - width) / 2)
+        y: Math.round((root.height - height) / 2)
+        width: Math.min(root.width - 40, 360)
+        height: 160
+        padding: 16
+        background: Rectangle { color: "#333333"; radius: 10 }
+
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 12
+
+            Label {
+                text: fuelTracker.strings["renameVehicle"]
+                color: "#ffffff"
+                font.pixelSize: 15
+                font.bold: true
+            }
+            TextField {
+                id: renameNameField
+                Layout.fillWidth: true
+                color: "#ffffff"
+                inputMethodHints: Qt.ImhNoPredictiveText
+            }
+            RowLayout {
+                Item { Layout.fillWidth: true }
+                Button {
+                    text: fuelTracker.strings["cancel"]
+                    onClicked: renamePopup.close()
+                }
+                Button {
+                    text: fuelTracker.strings["saveEntry"]
+                    highlighted: true
+                    onClicked: {
+                        fuelTracker.renameVehicle(root.pendingVehicleId, renameNameField.text)
+                        renamePopup.close()
+                    }
+                }
+            }
+        }
+    }
+
+    // Lösch-Rückfrage beim Fahrzeug
+    Popup {
+        id: deleteConfirmPopup
+        modal: true
+        dim: true
+        focus: true
+        x: Math.round((root.width - width) / 2)
+        y: Math.round((root.height - height) / 2)
+        width: Math.min(root.width - 40, 360)
+        height: 170
+        padding: 16
+        background: Rectangle { color: "#333333"; radius: 10 }
+
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 12
+
+            Label {
+                text: fuelTracker.strings["confirmDeleteVehicle"]
+                color: "#ffffff"
+                font.pixelSize: 15
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+            }
+            Item { Layout.fillHeight: true }
+            RowLayout {
+                Item { Layout.fillWidth: true }
+                Button {
+                    text: fuelTracker.strings["cancel"]
+                    onClicked: deleteConfirmPopup.close()
+                }
+                Button {
+                    text: fuelTracker.strings["yes"]
+                    highlighted: true
+                    onClicked: {
+                        fuelTracker.deleteVehicle(root.pendingVehicleId)
+                        deleteConfirmPopup.close()
+                    }
+                }
             }
         }
     }
@@ -194,7 +424,8 @@ ApplicationWindow {
 
                 RowLayout {
                     Label {
-                        text: fuelTracker.unit === "Gallonen" ? fuelTracker.strings["unitGallon"] : fuelTracker.strings["unitLiter"]
+                        text: fuelTracker.isElectric ? fuelTracker.strings["kwhUnit"]
+                                                    : (fuelTracker.unit === "Gallonen" ? fuelTracker.strings["unitGallon"] : fuelTracker.strings["unitLiter"])
                         color: "#ffffff"; Layout.preferredWidth: 90
                     }
                     TextField {
@@ -202,27 +433,33 @@ ApplicationWindow {
                         Layout.fillWidth: true
                         inputMethodHints: Qt.ImhFormattedNumbersOnly
                         placeholderText: fuelTracker.language === "English"
-                            ? (fuelTracker.unit === "Gallonen" ? "e.g. 10.5" : "e.g. 42.5")
-                            : (fuelTracker.unit === "Gallonen" ? "z. B. 10,5" : "z. B. 42,5")
+                            ? (fuelTracker.isElectric ? "e.g. 50" : (fuelTracker.unit === "Gallonen" ? "e.g. 10.5" : "e.g. 42.5"))
+                            : (fuelTracker.isElectric ? "z. B. 50" : (fuelTracker.unit === "Gallonen" ? "z. B. 10,5" : "z. B. 42,5"))
                     }
                 }
 
                 RowLayout {
                     Label {
                         text: fuelTracker.currencySymbol(fuelTracker.currency) + "/"
-                              + (fuelTracker.unit === "Gallonen" ? fuelTracker.strings["unitGallon"] : fuelTracker.strings["unitLiter"])
+                              + (fuelTracker.isElectric ? fuelTracker.strings["kwhUnit"]
+                                                        : (fuelTracker.unit === "Gallonen" ? fuelTracker.strings["unitGallon"] : fuelTracker.strings["unitLiter"]))
                         color: "#ffffff"; Layout.preferredWidth: 90
                     }
                     TextField {
                         id: priceField
                         Layout.fillWidth: true
                         inputMethodHints: Qt.ImhFormattedNumbersOnly
-                        placeholderText: fuelTracker.language === "English" ? "e.g. 1.819" : "z. B. 1,819"
+                        placeholderText: fuelTracker.language === "English"
+                            ? (fuelTracker.isElectric ? "e.g. 0.45" : "e.g. 1.819")
+                            : (fuelTracker.isElectric ? "z. B. 0,45" : "z. B. 1,819")
                     }
                 }
 
                 RowLayout {
-                    Label { text: fuelTracker.strings["fullTank"]; color: "#ffffff"; Layout.preferredWidth: 90 }
+                    Label {
+                        text: fuelTracker.isElectric ? fuelTracker.strings["fullCharge"] : fuelTracker.strings["fullTank"]
+                        color: "#ffffff"; Layout.preferredWidth: 90
+                    }
                     Switch {
                         id: fullSwitch
                         checked: true

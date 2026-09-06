@@ -44,6 +44,11 @@ static const StringEntry kStrings[] = {
     { "needMore",   "Weitere Tankung nötig",   "Another full tank needed" },
     { "unitLiter",  "Liter",                   "Liters" },
     { "unitGallon", "Gallonen",                "Gallons" },
+    { "settings",   "Einstellungen",           "Settings" },
+    { "unitName",   "Einheit",                 "Unit" },
+    { "currencyName", "Währung",               "Currency" },
+    { "languageName", "Sprache",               "Language" },
+    { "close",      "Schließen",               "Close" },
 };
 
 FuelTracker::FuelTracker(QObject *parent)

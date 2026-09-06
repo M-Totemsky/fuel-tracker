@@ -29,26 +29,63 @@ ApplicationWindow {
                 font.bold: true
             }
             Item { Layout.fillWidth: true }
+            ToolButton {
+                id: settingsBtn
+                text: fuelTracker.strings["settings"]
+                font.pixelSize: 15
+                onClicked: settingsPopup.open()
+            }
+        }
+    }
+
+    Popup {
+        id: settingsPopup
+        modal: true
+        dim: true
+        focus: true
+        x: Math.round((root.width - width) / 2)
+        y: Math.round((root.height - height) / 2)
+        width: Math.min(root.width - 40, 420)
+        height: col.implicitHeight + 32
+        padding: 16
+        background: Rectangle { color: "#333333"; radius: 10 }
+
+        ColumnLayout {
+            id: col
+            anchors.fill: parent
+            spacing: 10
+
+            Label { text: fuelTracker.strings["unitName"]; color: "#ffffff" }
             ComboBox {
-                id: unitBox
-                Layout.preferredWidth: 100
+                Layout.fillWidth: true
                 model: fuelTracker.unitOptions
                 currentIndex: fuelTracker.units.indexOf(fuelTracker.unit)
-                onActivated: function(index) { fuelTracker.setUnit(fuelTracker.units[index]) }
+                onActivated: function(i) { fuelTracker.setUnit(fuelTracker.units[i]) }
             }
+
+            Label { text: fuelTracker.strings["currencyName"]; color: "#ffffff" }
             ComboBox {
-                id: curBox
-                Layout.preferredWidth: 80
+                Layout.fillWidth: true
                 model: fuelTracker.currencies
                 currentIndex: fuelTracker.currencies.indexOf(fuelTracker.currency)
                 onActivated: fuelTracker.setCurrency(currentText)
             }
+
+            Label { text: fuelTracker.strings["languageName"]; color: "#ffffff" }
             ComboBox {
-                id: langBox
-                Layout.preferredWidth: 110
+                Layout.fillWidth: true
                 model: fuelTracker.languages
                 currentIndex: fuelTracker.languages.indexOf(fuelTracker.language)
                 onActivated: fuelTracker.setLanguage(currentText)
+            }
+
+            Item { Layout.fillHeight: true }
+
+            Button {
+                Layout.fillWidth: true
+                text: fuelTracker.strings["close"]
+                highlighted: true
+                onClicked: settingsPopup.close()
             }
         }
     }

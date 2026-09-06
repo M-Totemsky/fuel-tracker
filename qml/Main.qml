@@ -20,34 +20,35 @@ ApplicationWindow {
         height: 56
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: 12
-            anchors.rightMargin: 12
+            anchors.leftMargin: 8
+            anchors.rightMargin: 8
             Label {
                 text: "Fuel Tracker"
                 color: "#ffffff"
-                font.pixelSize: 20
+                font.pixelSize: 18
                 font.bold: true
             }
             Item { Layout.fillWidth: true }
             ComboBox {
                 id: unitBox
-                Layout.preferredWidth: 120
-                model: fuelTracker.units
-                currentIndex: {
-                    var i = fuelTracker.units.indexOf(fuelTracker.unit)
-                    return i < 0 ? 0 : i
-                }
-                onActivated: fuelTracker.setUnit(currentText)
+                Layout.preferredWidth: 100
+                model: fuelTracker.unitOptions
+                currentIndex: fuelTracker.units.indexOf(fuelTracker.unit)
+                onActivated: function(index) { fuelTracker.setUnit(fuelTracker.units[index]) }
             }
             ComboBox {
                 id: curBox
-                Layout.preferredWidth: 90
+                Layout.preferredWidth: 80
                 model: fuelTracker.currencies
-                currentIndex: {
-                    var i = fuelTracker.currencies.indexOf(fuelTracker.currency)
-                    return i < 0 ? 0 : i
-                }
+                currentIndex: fuelTracker.currencies.indexOf(fuelTracker.currency)
                 onActivated: fuelTracker.setCurrency(currentText)
+            }
+            ComboBox {
+                id: langBox
+                Layout.preferredWidth: 110
+                model: fuelTracker.languages
+                currentIndex: fuelTracker.languages.indexOf(fuelTracker.language)
+                onActivated: fuelTracker.setLanguage(currentText)
             }
         }
     }
@@ -87,7 +88,7 @@ ApplicationWindow {
 
                 RowLayout {
                     Layout.fillWidth: true
-                    Label { text: "Datum"; color: "#ffffff"; Layout.preferredWidth: 90 }
+                    Label { text: fuelTracker.strings["date"]; color: "#ffffff"; Layout.preferredWidth: 90 }
                     TextField {
                         id: dateField
                         Layout.fillWidth: true
@@ -97,13 +98,13 @@ ApplicationWindow {
                         inputMethodHints: Qt.ImhDate
                     }
                     Button {
-                        text: "Heute"
+                        text: fuelTracker.strings["today"]
                         onClicked: dateField.text = Qt.formatDateTime(new Date(), "dd.MM.yyyy")
                     }
                 }
 
                 RowLayout {
-                    Label { text: "km-Stand"; color: "#ffffff"; Layout.preferredWidth: 90 }
+                    Label { text: fuelTracker.strings["odometer"]; color: "#ffffff"; Layout.preferredWidth: 90 }
                     TextField {
                         id: kmField
                         Layout.fillWidth: true
@@ -113,7 +114,10 @@ ApplicationWindow {
                 }
 
                 RowLayout {
-                    Label { text: fuelTracker.unit; color: "#ffffff"; Layout.preferredWidth: 90 }
+                    Label {
+                        text: fuelTracker.unit === "Gallonen" ? fuelTracker.strings["unitGallon"] : fuelTracker.strings["unitLiter"]
+                        color: "#ffffff"; Layout.preferredWidth: 90
+                    }
                     TextField {
                         id: litersField
                         Layout.fillWidth: true
@@ -124,7 +128,8 @@ ApplicationWindow {
 
                 RowLayout {
                     Label {
-                        text: fuelTracker.currencySymbol(fuelTracker.currency) + "/" + fuelTracker.unit
+                        text: fuelTracker.currencySymbol(fuelTracker.currency) + "/"
+                              + (fuelTracker.unit === "Gallonen" ? fuelTracker.strings["unitGallon"] : fuelTracker.strings["unitLiter"])
                         color: "#ffffff"; Layout.preferredWidth: 90
                     }
                     TextField {
@@ -136,7 +141,7 @@ ApplicationWindow {
                 }
 
                 RowLayout {
-                    Label { text: "Voll getankt"; color: "#ffffff"; Layout.preferredWidth: 90 }
+                    Label { text: fuelTracker.strings["fullTank"]; color: "#ffffff"; Layout.preferredWidth: 90 }
                     Switch {
                         id: fullSwitch
                         checked: true
@@ -145,7 +150,7 @@ ApplicationWindow {
 
                 Button {
                     Layout.fillWidth: true
-                    text: "Eintrag speichern"
+                    text: fuelTracker.strings["saveEntry"]
                     highlighted: true
                     onClicked: {
                         var km = parseFloat(kmField.text.replace(',', '.'))
@@ -190,7 +195,7 @@ ApplicationWindow {
 
         // Verlauf (eigener Scrollbereich)
         Label {
-            text: "Verlauf"
+            text: fuelTracker.strings["history"]
             color: "#ffffff"
             font.pixelSize: 18
             font.bold: true
@@ -213,10 +218,20 @@ ApplicationWindow {
                     RowLayout {
                         anchors.fill: parent
                         anchors.margins: 8
+                        anchors.leftMargin: 10
                         Label { text: root.fmtDate(modelData.date); color: "#ffffff" }
                         Item { Layout.fillWidth: true }
                         Label { text: modelData.amount.toFixed(1) + " " + modelData.amountUnit; color: "#dddddd" }
                         Label { text: modelData.km.toFixed(0) + " km"; color: "#dddddd" }
+                        ToolButton {
+                            text: "✕"
+                            onClicked: fuelTracker.deleteEntry(modelData.id)
+                            contentItem: Label {
+                                text: "✕"
+                                color: "#ff6b6b"
+                                font.pixelSize: 16
+                            }
+                        }
                     }
                 }
                 ScrollBar.vertical: ScrollBar {}
@@ -224,7 +239,7 @@ ApplicationWindow {
 
             Label {
                 anchors.centerIn: parent
-                text: "Noch keine Einträge"
+                text: fuelTracker.strings["noEntries"]
                 color: "#777777"
                 visible: fuelTracker.entryCount === 0
             }
@@ -232,7 +247,7 @@ ApplicationWindow {
 
         Button {
             Layout.fillWidth: true
-            text: "Alle Einträge löschen"
+            text: fuelTracker.strings["deleteAll"]
             onClicked: fuelTracker.clearAll()
         }
     }

@@ -29,9 +29,29 @@ static bool isValidCurrency(const QString &code)
     return false;
 }
 
+// Übersetzungstabelle: Neue Texte hier ergänzen (de/en)
+struct StringEntry { const char *key; const char *de; const char *en; };
+static const StringEntry kStrings[] = {
+    { "date",       "Datum",                   "Date" },
+    { "today",      "Heute",                   "Today" },
+    { "odometer",   "km-Stand",                "Odometer (km)" },
+    { "fullTank",   "Voll getankt",            "Full tank" },
+    { "saveEntry",  "Eintrag speichern",       "Save entry" },
+    { "history",    "Verlauf",                 "History" },
+    { "noEntries",  "Noch keine Einträge",     "No entries yet" },
+    { "deleteAll",  "Alle Einträge löschen",   "Delete all entries" },
+    { "noData",     "Noch keine Daten",        "No data yet" },
+    { "needMore",   "Weitere Tankung nötig",   "Another full tank needed" },
+    { "unitLiter",  "Liter",                   "Liters" },
+    { "unitGallon", "Gallonen",                "Gallons" },
+};
+
 FuelTracker::FuelTracker(QObject *parent)
     : QObject(parent)
 {
+    if (QLocale::system().language() == QLocale::English) {
+        m_language = QStringLiteral("English");
+    }
     openDatabase();
     loadSettings();
     recompute();
@@ -98,6 +118,7 @@ void FuelTracker::loadSettings()
         const QString value = q.value(1).toString();
         if (key == QStringLiteral("unit")) m_unit = value;
         else if (key == QStringLiteral("currency")) m_currency = value;
+        else if (key == QStringLiteral("language")) m_language = value;
     }
 }
 
@@ -112,10 +133,47 @@ void FuelTracker::saveSettings()
     q.addBindValue(QStringLiteral("currency"));
     q.addBindValue(m_currency);
     q.exec();
+    q.addBindValue(QStringLiteral("language"));
+    q.addBindValue(m_language);
+    q.exec();
 }
 
 QString FuelTracker::unit() const { return m_unit; }
 QString FuelTracker::currency() const { return m_currency; }
+QString FuelTracker::language() const { return m_language; }
+
+QString FuelTracker::ls(const QString &key) const
+{
+    const bool en = m_language == QStringLiteral("English");
+    for (auto &s : kStrings) {
+        if (key == QString::fromUtf8(s.key)) {
+            return QString::fromUtf8(en ? s.en : s.de);
+        }
+    }
+    return key;
+}
+
+QVariantMap FuelTracker::strings() const
+{
+    QVariantMap map;
+    for (auto &s : kStrings) {
+        map.insert(QString::fromUtf8(s.key), ls(QString::fromUtf8(s.key)));
+    }
+    return map;
+}
+
+QString FuelTracker::unitLabel() const
+{
+    return m_unit == QStringLiteral("Gallonen") ? ls(QStringLiteral("unitGallon"))
+                                                : ls(QStringLiteral("unitLiter"));
+}
+
+QStringList FuelTracker::unitOptions() const
+{
+    QStringList list;
+    list << ls(QStringLiteral("unitLiter")) << ls(QStringLiteral("unitGallon"));
+    return list;
+}
 
 QStringList FuelTracker::units() const
 {
@@ -127,6 +185,11 @@ QStringList FuelTracker::currencies() const
     QStringList list;
     for (auto &c : kCurrencies) list << QString::fromUtf8(c.code);
     return list;
+}
+
+QStringList FuelTracker::languages() const
+{
+    return { QStringLiteral("Deutsch"), QStringLiteral("English") };
 }
 
 void FuelTracker::setUnit(const QString &unit)
@@ -146,6 +209,18 @@ void FuelTracker::setCurrency(const QString &currency)
     m_currency = currency;
     saveSettings();
     emit settingsChanged();
+    emit dataChanged();
+}
+
+void FuelTracker::setLanguage(const QString &language)
+{
+    if (m_language == language) return;
+    if (!(language == QStringLiteral("Deutsch") || language == QStringLiteral("English"))) return;
+    m_language = language;
+    saveSettings();
+    emit languageChanged();
+    emit settingsChanged();
+    recompute();
     emit dataChanged();
 }
 
@@ -171,7 +246,7 @@ void FuelTracker::recompute()
         "SELECT km, liters, price_per_liter, date FROM entries "
         "WHERE full_tank = 1 ORDER BY id DESC LIMIT 2"));
     if (!v.next()) {
-        m_lastSummary = tr("Noch keine Daten");
+        m_lastSummary = ls(QStringLiteral("noData"));
         m_lastConsumption = 0.0;
         m_lastCostPerKm = 0.0;
         return;
@@ -182,7 +257,7 @@ void FuelTracker::recompute()
     double price2 = v.value(2).toDouble();
 
     if (!v.next()) {
-        m_lastSummary = tr("Weitere Tankung nötig");
+        m_lastSummary = ls(QStringLiteral("needMore"));
         m_lastConsumption = 0.0;
         m_lastCostPerKm = 0.0;
         return;
@@ -191,7 +266,7 @@ void FuelTracker::recompute()
     double km1 = v.value(0).toDouble();
     double diffKm = km2 - km1;
     if (diffKm <= 0 || lit2 <= 0) {
-        m_lastSummary = tr("Weitere Tankung nötig");
+        m_lastSummary = ls(QStringLiteral("needMore"));
         m_lastConsumption = 0.0;
         m_lastCostPerKm = 0.0;
         return;
@@ -268,14 +343,15 @@ QVariantList FuelTracker::entries() const
     QVariantList list;
     QSqlQuery q(m_db);
     q.exec(QStringLiteral(
-        "SELECT date, km, liters, price_per_liter, full_tank FROM entries "
+        "SELECT id, date, km, liters, price_per_liter, full_tank FROM entries "
         "ORDER BY id DESC"));
     while (q.next()) {
-        double liters = q.value(2).toDouble();
-        double pricePerLiter = q.value(3).toDouble();
+        double liters = q.value(3).toDouble();
+        double pricePerLiter = q.value(4).toDouble();
         QVariantMap m;
-        m.insert(QStringLiteral("date"), q.value(0).toString());
-        m.insert(QStringLiteral("km"), q.value(1).toDouble());
+        m.insert(QStringLiteral("id"), q.value(0).toInt());
+        m.insert(QStringLiteral("date"), q.value(1).toString());
+        m.insert(QStringLiteral("km"), q.value(2).toDouble());
         if (m_unit == QStringLiteral("Gallonen")) {
             m.insert(QStringLiteral("amount"), liters / LITER_PER_GALLON);
             m.insert(QStringLiteral("amountUnit"), QStringLiteral("gal"));
@@ -285,10 +361,24 @@ QVariantList FuelTracker::entries() const
             m.insert(QStringLiteral("amountUnit"), QStringLiteral("l"));
             m.insert(QStringLiteral("price"), pricePerLiter);
         }
-        m.insert(QStringLiteral("fullTank"), q.value(4).toBool());
+        m.insert(QStringLiteral("fullTank"), q.value(5).toBool());
         list.append(m);
     }
     return list;
+}
+
+bool FuelTracker::deleteEntry(int id)
+{
+    QSqlQuery q(m_db);
+    q.prepare(QStringLiteral("DELETE FROM entries WHERE id = ?"));
+    q.addBindValue(id);
+    if (!q.exec()) {
+        qWarning() << "DELETE failed:" << q.lastError().text();
+        return false;
+    }
+    recompute();
+    emit dataChanged();
+    return true;
 }
 
 void FuelTracker::clearAll()

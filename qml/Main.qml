@@ -12,6 +12,10 @@ ApplicationWindow {
 
     property int pendingVehicleId: -1   // für Umbenennen/Löschen-Dialog
 
+    // Akzentfarbe wie im App-Icon (knallig gelb) + passende Textfarbe
+    property color accent: "#FFD400"
+    property color accentText: "#1a1a1a"
+
     function fmtDate(iso) {
         var p = iso.slice(0, 10).split('-')
         return p.length === 3 ? p[2] + "." + p[1] + "." + p[0] : iso
@@ -65,12 +69,12 @@ RowLayout {
                     font.pixelSize: 15
                     onClicked: vehiclePopup.open()
                     background: Rectangle {
-                        color: "#3d7ea6"
+                        color: root.accent
                         radius: 6
                     }
                     contentItem: Label {
                         text: fuelTracker.activeVehicleName
-                        color: "#ffffff"
+                        color: root.accentText
                         font.pixelSize: 15
                     }
                 }
@@ -116,6 +120,18 @@ RowLayout {
                     text: (modelData.isActive ? "✓ " : "") + modelData.name
                           + "  ·  " + modelData.fuelTypeLabel
                     font.pixelSize: 15
+                    background: Rectangle {
+                        color: modelData.isActive ? root.accent : "#444444"
+                        radius: 4
+                    }
+                    contentItem: Label {
+                        text: (modelData.isActive ? "✓ " : "") + modelData.name
+                              + "  ·  " + modelData.fuelTypeLabel
+                        color: modelData.isActive ? root.accentText : "#ffffff"
+                        font.pixelSize: 15
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
                     onClicked: {
                         fuelTracker.setActiveVehicle(modelData.id)
                         vehiclePopup.close()
@@ -216,7 +232,7 @@ RowLayout {
                         Rectangle {
                             Layout.fillWidth: true
                             height: 52
-                            color: modelData.isActive ? "#3a4a3a" : "#2a2a2a"
+                            color: modelData.isActive ? root.accent : "#2a2a2a"
                             radius: 6
                             RowLayout {
                                 anchors.fill: parent
@@ -225,13 +241,13 @@ RowLayout {
                                     spacing: 1
                                     Label {
                                         text: (modelData.isActive ? "✓ " : "") + modelData.name
-                                        color: "#ffffff"
+                                        color: modelData.isActive ? root.accentText : "#ffffff"
                                         font.pixelSize: 15
                                         font.bold: true
                                     }
                                     Label {
                                         text: modelData.fuelTypeLabel
-                                        color: "#999999"
+                                        color: modelData.isActive ? "#555555" : "#999999"
                                         font.pixelSize: 12
                                     }
                                 }
@@ -239,6 +255,19 @@ RowLayout {
                                 Button {
                                     text: fuelTracker.strings["renameVehicle"]
                                     font.pixelSize: 12
+                                    background: Rectangle {
+                                        color: root.accent
+                                        radius: 4
+                                        implicitWidth: 92
+                                        implicitHeight: 32
+                                    }
+                                    contentItem: Label {
+                                        text: fuelTracker.strings["renameVehicle"]
+                                        color: root.accentText
+                                        font.pixelSize: 12
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
                                     onClicked: {
                                         root.pendingVehicleId = modelData.id
                                         renameNameField.text = modelData.name
@@ -248,6 +277,19 @@ RowLayout {
                                 Button {
                                     text: fuelTracker.strings["deleteVehicle"]
                                     font.pixelSize: 12
+                                    background: Rectangle {
+                                        color: root.accent
+                                        radius: 4
+                                        implicitWidth: 92
+                                        implicitHeight: 32
+                                    }
+                                    contentItem: Label {
+                                        text: fuelTracker.strings["deleteVehicle"]
+                                        color: root.accentText
+                                        font.pixelSize: 12
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
                                     onClicked: {
                                         root.pendingVehicleId = modelData.id
                                         deleteConfirmPopup.open()
@@ -492,13 +534,42 @@ RowLayout {
                     Switch {
                         id: fullSwitch
                         checked: true
+                        indicator: Rectangle {
+                            implicitWidth: 48
+                            implicitHeight: 28
+                            x: fullSwitch.leftPadding
+                            y: parent.height / 2 - height / 2
+                            radius: 14
+                            color: fullSwitch.checked ? root.accent : "#555555"
+                            border.color: fullSwitch.checked ? root.accent : "#666666"
+                            border.width: 1
+                            Rectangle {
+                                x: fullSwitch.checked ? parent.width - width - 3 : 3
+                                y: 3
+                                width: 22
+                                height: 22
+                                radius: 11
+                                color: fullSwitch.checked ? "#ffffff" : "#aaaaaa"
+                                Behavior on x { NumberAnimation { duration: 120 } }
+                            }
+                        }
                     }
                 }
 
                 Button {
                     Layout.fillWidth: true
                     text: fuelTracker.strings["saveEntry"]
-                    highlighted: true
+                    background: Rectangle {
+                        color: root.accent
+                        radius: 6
+                    }
+                    contentItem: Label {
+                        text: fuelTracker.strings["saveEntry"]
+                        color: root.accentText
+                        font.pixelSize: 15
+                        font.bold: true
+                        horizontalAlignment: Text.AlignHCenter
+                    }
                     onClicked: {
                         var km = parseFloat(kmField.text.replace(',', '.'))
                         var lit = parseFloat(litersField.text.replace(',', '.'))

@@ -10,7 +10,11 @@ ApplicationWindow {
     title: "Fuel Tracker"
     color: "#1e1e1e"
 
-    // Prio: kleine, klare Einstiegsoberfläche
+    function fmtDate(iso) {
+        var p = iso.slice(0, 10).split('-')
+        return p.length === 3 ? p[2] + "." + p[1] + "." + p[0] : iso
+    }
+
     header: ToolBar {
         background: Rectangle { color: "#2b2b2b" }
         height: 56
@@ -51,180 +55,207 @@ ApplicationWindow {
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 16
-        spacing: 16
+        spacing: 8
 
-        // Zusammenfassung
-        Rectangle {
-            id: summaryCard
-            Layout.fillWidth: true
-            color: "#313131"
-            radius: 10
-            height: 120
-            Column {
-                anchors.centerIn: parent
-                spacing: 4
-                Label {
-                    text: fuelTracker.lastEntrySummary
-                    color: "#ffffff"
-                    font.pixelSize: 20
-                    horizontalAlignment: Text.AlignHCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-                Label {
-                    text: fuelTracker.entryCount + " Tankungen"
-                    color: "#aaaaaa"
-                    font.pixelSize: 14
-                    horizontalAlignment: Text.AlignHCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-            }
-        }
-
-        // Eingabeformular (scrollbar, damit bei geöffneter Tastatur
-        // alle Felder + "Speichern"-Button erreichbar sind)
+        // Ganze Seite scrollbar: Zusammenfassung + Formular + Verlauf
+        // sind so auch bei offener Tastatur erreichbar
         ScrollView {
-            id: formScroll
+            id: pageScroll
             Layout.fillWidth: true
-            Layout.preferredHeight: 400
+            Layout.fillHeight: true
             clip: true
 
-            Rectangle {
-                id: formCard
-                width: formScroll.availableWidth
-                height: 380
-                color: "#262626"
-                radius: 10
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: 12
-                    spacing: 10
+            Column {
+                width: pageScroll.availableWidth
+                spacing: 16
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    Label { text: "Datum"; color: "#ffffff"; Layout.preferredWidth: 110 }
-                    TextField {
-                        id: dateField
-                        Layout.fillWidth: true
-                        placeholderText: "JJJJ-MM-TT (leer = heute)"
-                        color: "#ffffff"
-                        inputMethodHints: Qt.ImhDate
-                    }
-                }
-
-                // km
-                RowLayout {
-                    Label { text: "km-Stand"; color: "#ffffff"; Layout.preferredWidth: 110 }
-                    TextField {
-                        id: kmField
-                        Layout.fillWidth: true
-                        inputMethodHints: Qt.ImhDigitsOnly
-                        placeholderText: "z. B. 124350"
-                    }
-                }
-                // Menge (Einheit abhängig)
-                RowLayout {
-                    Label { text: fuelTracker.unit; color: "#ffffff"; Layout.preferredWidth: 110 }
-                    TextField {
-                        id: litersField
-                        Layout.fillWidth: true
-                        inputMethodHints: Qt.ImhFormattedNumbersOnly
-                        placeholderText: fuelTracker.unit === "Gallonen" ? "z. B. 10,5" : "z. B. 42,5"
-                    }
-                }
-                // Preis/Einheit
-                RowLayout {
-                    Label {
-                        text: fuelTracker.currency === "USD" ? "$/" + fuelTracker.unit
-                            : fuelTracker.currency === "GBP" ? "£/" + fuelTracker.unit
-                            : "€/" + fuelTracker.unit
-                        color: "#ffffff"; Layout.preferredWidth: 110
-                    }
-                    TextField {
-                        id: priceField
-                        Layout.fillWidth: true
-                        inputMethodHints: Qt.ImhFormattedNumbersOnly
-                        placeholderText: "z. B. 1,819"
+                // Zusammenfassung
+                Rectangle {
+                    id: summaryCard
+                    width: parent.width
+                    height: 120
+                    color: "#313131"
+                    radius: 10
+                    Column {
+                        anchors.centerIn: parent
+                        spacing: 4
+                        Label {
+                            text: fuelTracker.lastEntrySummary
+                            color: "#ffffff"
+                            font.pixelSize: 20
+                            horizontalAlignment: Text.AlignHCenter
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        Label {
+                            text: fuelTracker.entryCount + " Tankungen"
+                            color: "#aaaaaa"
+                            font.pixelSize: 14
+                            horizontalAlignment: Text.AlignHCenter
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
                     }
                 }
 
-                RowLayout {
-                    Label { text: "Voll getankt"; color: "#ffffff"; Layout.preferredWidth: 110 }
-                    Switch {
-                        id: fullSwitch
-                        checked: true
+                // Eingabeformular
+                Rectangle {
+                    id: formCard
+                    width: parent.width
+                    height: 400
+                    color: "#262626"
+                    radius: 10
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 12
+                        spacing: 10
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Label { text: "Datum"; color: "#ffffff"; Layout.preferredWidth: 90 }
+                            TextField {
+                                id: dateField
+                                Layout.fillWidth: true
+                                text: Qt.formatDateTime(new Date(), "dd.MM.yyyy")
+                                placeholderText: "TT.MM.JJJJ"
+                                color: "#ffffff"
+                                inputMethodHints: Qt.ImhDate
+                            }
+                            Button {
+                                text: "Heute"
+                                onClicked: dateField.text = Qt.formatDateTime(new Date(), "dd.MM.yyyy")
+                            }
+                        }
+
+                        // km
+                        RowLayout {
+                            Label { text: "km-Stand"; color: "#ffffff"; Layout.preferredWidth: 90 }
+                            TextField {
+                                id: kmField
+                                Layout.fillWidth: true
+                                inputMethodHints: Qt.ImhDigitsOnly
+                                placeholderText: "z. B. 124350"
+                            }
+                        }
+                        // Menge (Einheit abhängig)
+                        RowLayout {
+                            Label { text: fuelTracker.unit; color: "#ffffff"; Layout.preferredWidth: 90 }
+                            TextField {
+                                id: litersField
+                                Layout.fillWidth: true
+                                inputMethodHints: Qt.ImhFormattedNumbersOnly
+                                placeholderText: fuelTracker.unit === "Gallonen" ? "z. B. 10,5" : "z. B. 42,5"
+                            }
+                        }
+                        // Preis/Einheit
+                        RowLayout {
+                            Label {
+                                text: fuelTracker.currency === "USD" ? "$/" + fuelTracker.unit
+                                    : fuelTracker.currency === "GBP" ? "£/" + fuelTracker.unit
+                                    : "€/" + fuelTracker.unit
+                                color: "#ffffff"; Layout.preferredWidth: 90
+                            }
+                            TextField {
+                                id: priceField
+                                Layout.fillWidth: true
+                                inputMethodHints: Qt.ImhFormattedNumbersOnly
+                                placeholderText: "z. B. 1,819"
+                            }
+                        }
+
+                        RowLayout {
+                            Label { text: "Voll getankt"; color: "#ffffff"; Layout.preferredWidth: 90 }
+                            Switch {
+                                id: fullSwitch
+                                checked: true
+                            }
+                        }
+
+                        Button {
+                            Layout.fillWidth: true
+                            text: "Eintrag speichern"
+                            highlighted: true
+                            onClicked: {
+                                var km = parseFloat(kmField.text.replace(',', '.'))
+                                var lit = parseFloat(litersField.text.replace(',', '.'))
+                                var price = parseFloat(priceField.text.replace(',', '.'))
+                                if (isNaN(km) || isNaN(lit) || isNaN(price)) { return }
+
+                                var dtext = dateField.text.trim()
+                                var dt
+                                if (dtext.length === 0) {
+                                    dt = new Date()
+                                } else {
+                                    var y, mo, da, parts, p
+                                    if (dtext.indexOf('-') >= 0) {
+                                        parts = dtext.split('-')
+                                        if (parts.length !== 3) { return }
+                                        y = parseInt(parts[0], 10)
+                                        mo = parseInt(parts[1], 10) - 1
+                                        da = parseInt(parts[2], 10)
+                                    } else {
+                                        p = dtext.split('.')
+                                        if (p.length !== 3) { return }
+                                        da = parseInt(p[0], 10)
+                                        mo = parseInt(p[1], 10) - 1
+                                        y = parseInt(p[2], 10)
+                                    }
+                                    if (isNaN(y) || isNaN(mo) || isNaN(da)) { return }
+                                    dt = new Date(y, mo, da)
+                                }
+
+                                if (fuelTracker.addEntry(dt, km, lit, price, fullSwitch.checked)) {
+                                    dateField.text = Qt.formatDateTime(new Date(), "dd.MM.yyyy")
+                                    kmField.text = ""
+                                    litersField.text = ""
+                                    priceField.text = ""
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Verlauf
+                Label {
+                    text: "Verlauf"
+                    color: "#ffffff"
+                    font.pixelSize: 18
+                    font.bold: true
+                }
+
+                Label {
+                    text: "Noch keine Einträge"
+                    color: "#777777"
+                    visible: fuelTracker.entryCount === 0
+                }
+
+                ListView {
+                    id: listView
+                    width: parent.width
+                    height: Math.min(fuelTracker.entryCount * 48, 500)
+                    interactive: false
+                    clip: true
+                    model: fuelTracker.entries
+                    delegate: Rectangle {
+                        width: listView.width
+                        height: 48
+                        color: index % 2 === 0 ? "#2c2c2c" : "#282828"
+                        radius: 6
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: 8
+                            Label { text: root.fmtDate(modelData.date); color: "#ffffff" }
+                            Item { Layout.fillWidth: true }
+                            Label { text: modelData.amount.toFixed(1) + " " + modelData.amountUnit; color: "#dddddd" }
+                            Label { text: modelData.km.toFixed(0) + " km"; color: "#dddddd" }
+                        }
                     }
                 }
 
                 Button {
-                    Layout.fillWidth: true
-                    text: "Eintrag speichern"
-                    highlighted: true
-                    onClicked: {
-                        var km = parseFloat(kmField.text.replace(',', '.'))
-                        var lit = parseFloat(litersField.text.replace(',', '.'))
-                        var price = parseFloat(priceField.text.replace(',', '.'))
-                        if (isNaN(km) || isNaN(lit) || isNaN(price)) { return }
-
-                        var dtext = dateField.text.trim()
-                        var dt
-                        if (dtext.length === 0) {
-                            dt = new Date()
-                        } else {
-                            var parts = dtext.split('-')
-                            if (parts.length !== 3) { return }
-                            var y = parseInt(parts[0], 10)
-                            var mo = parseInt(parts[1], 10) - 1
-                            var da = parseInt(parts[2], 10)
-                            if (isNaN(y) || isNaN(mo) || isNaN(da)) { return }
-                            dt = new Date(y, mo, da)
-                        }
-
-                        if (fuelTracker.addEntry(dt, km, lit, price, fullSwitch.checked)) {
-                            dateField.text = ""
-                            kmField.text = ""
-                            litersField.text = ""
-                            priceField.text = ""
-                        }
-                    }
+                    width: parent.width
+                    text: "Alle Einträge löschen"
+                    onClicked: fuelTracker.clearAll()
                 }
             }
-        }
-        }
-
-        // Verlauf
-        Label {
-            text: "Verlauf"
-            color: "#ffffff"
-            font.pixelSize: 18
-            font.bold: true
-        }
-
-        ListView {
-            id: listView
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            clip: true
-            model: fuelTracker.entries
-            delegate: Rectangle {
-                width: listView.width
-                height: 46
-                color: index % 2 === 0 ? "#2c2c2c" : "#282828"
-                radius: 6
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 8
-                    Label { text: modelData.date.slice(0, 10); color: "#ffffff" }
-                    Item { Layout.fillWidth: true }
-                    Label { text: modelData.amount.toFixed(1) + " " + modelData.amountUnit; color: "#dddddd" }
-                    Label { text: modelData.km.toFixed(0) + " km"; color: "#dddddd" }
-                }
-            }
-        }
-
-        Button {
-            Layout.fillWidth: true
-            text: "Alle Einträge löschen"
-            onClicked: fuelTracker.clearAll()
         }
     }
 }

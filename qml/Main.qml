@@ -148,9 +148,7 @@ ApplicationWindow {
                         // Preis/Einheit
                         RowLayout {
                             Label {
-                                text: fuelTracker.currency === "USD" ? "$/" + fuelTracker.unit
-                                    : fuelTracker.currency === "GBP" ? "£/" + fuelTracker.unit
-                                    : "€/" + fuelTracker.unit
+                                text: fuelTracker.currencySymbol(fuelTracker.currency) + "/" + fuelTracker.unit
                                 color: "#ffffff"; Layout.preferredWidth: 90
                             }
                             TextField {

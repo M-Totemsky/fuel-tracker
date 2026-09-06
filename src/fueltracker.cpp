@@ -12,6 +12,23 @@
 static constexpr double LITER_PER_GALLON = 3.785411784;   // US-Gallone
 static constexpr double KM_PER_MILE     = 1.609344;
 
+// Währungs-Tabelle: Neue Währung hier ergänzen, dann ist sie überall verfügbar
+struct CurrencyInfo { const char *code; const char *symbol; };
+static const CurrencyInfo kCurrencies[] = {
+    { "EUR", "€" },
+    { "USD", "$" },
+    { "GBP", "£" },
+    { "ZAR", "R" },
+};
+
+static bool isValidCurrency(const QString &code)
+{
+    for (auto &c : kCurrencies) {
+        if (code == QString::fromUtf8(c.code)) return true;
+    }
+    return false;
+}
+
 FuelTracker::FuelTracker(QObject *parent)
     : QObject(parent)
 {
@@ -107,7 +124,9 @@ QStringList FuelTracker::units() const
 
 QStringList FuelTracker::currencies() const
 {
-    return { QStringLiteral("EUR"), QStringLiteral("USD"), QStringLiteral("GBP") };
+    QStringList list;
+    for (auto &c : kCurrencies) list << QString::fromUtf8(c.code);
+    return list;
 }
 
 void FuelTracker::setUnit(const QString &unit)
@@ -123,19 +142,18 @@ void FuelTracker::setUnit(const QString &unit)
 void FuelTracker::setCurrency(const QString &currency)
 {
     if (m_currency == currency) return;
-    if (!(currency == QStringLiteral("EUR")
-          || currency == QStringLiteral("USD")
-          || currency == QStringLiteral("GBP"))) return;
+    if (!isValidCurrency(currency)) return;
     m_currency = currency;
     saveSettings();
     emit settingsChanged();
     emit dataChanged();
 }
 
-static QString currencySymbol(const QString &currency)
+QString FuelTracker::currencySymbol(const QString &currency) const
 {
-    if (currency == QLatin1String("USD")) return QStringLiteral("$");
-    if (currency == QLatin1String("GBP")) return QStringLiteral("£");
+    for (auto &c : kCurrencies) {
+        if (currency == QString::fromUtf8(c.code)) return QString::fromUtf8(c.symbol);
+    }
     return QStringLiteral("€");
 }
 

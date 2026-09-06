@@ -35,6 +35,7 @@ public:
 
     Q_INVOKABLE void setUnit(const QString &unit);
     Q_INVOKABLE void setCurrency(const QString &currency);
+    Q_INVOKABLE QString currencySymbol(const QString &currency) const;
     Q_INVOKABLE bool addEntry(const QDateTime &date,
                               double km,
                               double amount,     // Liter oder Gallonen je nach unit

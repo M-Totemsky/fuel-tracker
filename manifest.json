@@ -11,5 +11,5 @@
     "framework": "$ENV{CLICK_FRAMEWORK}",
     "maintainer": "sepp <sepp@local>",
     "title": "Fuel Tracker",
-    "version": "0.1.7"
+    "version": "0.1.8"
 }

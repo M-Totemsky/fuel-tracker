@@ -6,4 +6,5 @@ Icon=icons/fuel-tracker.svg
 Terminal=false
 Type=Application
 X-Ubuntu-Touch=true
+X-Ubuntu-Supported-Orientations=portrait
 Categories=Utility;

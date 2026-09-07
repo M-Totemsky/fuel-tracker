@@ -19,6 +19,7 @@ static const CurrencyInfo kCurrencies[] = {
     { "USD", "$" },
     { "GBP", "£" },
     { "ZAR", "R" },
+    { "JPY", "¥" },
 };
 
 static bool isValidCurrency(const QString &code)

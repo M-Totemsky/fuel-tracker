@@ -15,3 +15,4 @@ desktop/
 
 # lokal
 *.sqlite
+build.log

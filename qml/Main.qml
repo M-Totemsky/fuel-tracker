@@ -219,17 +219,29 @@ RowLayout {
                 }
             }
 
-            ScrollView {
+            Flickable {
                 id: settingsScroll
+                objectName: "settingsScroll"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
-                contentWidth: availableWidth
-                ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+                contentWidth: width
+                contentHeight: settingsCol.implicitHeight + 48
+                boundsBehavior: Flickable.StopAtBounds
+                ScrollBar.vertical: ScrollBar {
+                    policy: ScrollBar.AsNeeded
+                    implicitWidth: 4
+                    contentItem: Rectangle {
+                        implicitWidth: 4
+                        radius: 2
+                        color: "#cccccc"
+                    }
+                    background: Rectangle { color: "transparent" }
+                }
 
                 ColumnLayout {
                     id: settingsCol
-                    width: settingsScroll.availableWidth
+                    width: settingsScroll.width - 8
                     spacing: 10
 
                     Label { text: fuelTracker.strings["vehicles"]; color: "#ffffff" }
@@ -363,7 +375,7 @@ RowLayout {
                         }
                     }
 
-                    Item { Layout.fillHeight: true }
+                    Item { Layout.preferredHeight: 16; Layout.fillWidth: true }
                 }
             }
         }
@@ -566,7 +578,16 @@ RowLayout {
                         confirmRestorePopup.open()
                     }
                 }
-                ScrollBar.vertical: ScrollBar {}
+                ScrollBar.vertical: ScrollBar {
+                    policy: ScrollBar.AsNeeded
+                    implicitWidth: 4
+                    contentItem: Rectangle {
+                        implicitWidth: 4
+                        radius: 2
+                        color: "#cccccc"
+                    }
+                    background: Rectangle { color: "transparent" }
+                }
             }
         }
     }
@@ -863,7 +884,16 @@ RowLayout {
                         }
                     }
                 }
-                ScrollBar.vertical: ScrollBar {}
+                ScrollBar.vertical: ScrollBar {
+                    policy: ScrollBar.AsNeeded
+                    implicitWidth: 4
+                    contentItem: Rectangle {
+                        implicitWidth: 4
+                        radius: 2
+                        color: "#cccccc"
+                    }
+                    background: Rectangle { color: "transparent" }
+                }
             }
 
             Label {

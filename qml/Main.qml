@@ -30,6 +30,7 @@ ApplicationWindow {
     }
 
     function fmtNum(x, digits) {
+        if (typeof x !== "number" || !isFinite(x)) x = 0
         var s = x.toFixed(digits)
         return (fuelTracker.language === "English" || fuelTracker.language === "日本語") ? s : s.replace('.', ',')
     }
@@ -46,15 +47,18 @@ ApplicationWindow {
         var y, mo, da
         if (parts[0].length === 4) {        // JJJJ-MM-TT / YYYY-MM-DD
             y = parseInt(parts[0], 10)
-            mo = parseInt(parts[1], 10) - 1
+            mo = parseInt(parts[1], 10)
             da = parseInt(parts[2], 10)
         } else {                            // TT-MM-JJJJ / DD-MM-YYYY
             da = parseInt(parts[0], 10)
-            mo = parseInt(parts[1], 10) - 1
+            mo = parseInt(parts[1], 10)
             y = parseInt(parts[2], 10)
         }
         if (isNaN(y) || isNaN(mo) || isNaN(da)) { return null }
-        return new Date(y, mo, da)
+        if (mo < 1 || mo > 12 || da < 1 || da > 31 || y < 1900 || y > 2100) { return null }
+        var d = new Date(y, mo - 1, da)
+        if (d.getFullYear() !== y || d.getMonth() !== mo - 1 || d.getDate() !== da) { return null }
+        return d
     }
 
     header: ToolBar {
@@ -125,8 +129,6 @@ RowLayout {
                 Button {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 44
-                    text: (modelData.isActive ? "✓ " : "") + modelData.name
-                          + "  ·  " + modelData.fuelTypeLabel
                     font.pixelSize: 15
                     background: Rectangle {
                         color: modelData.isActive ? root.accent : "#444444"
@@ -384,18 +386,21 @@ RowLayout {
     // Umbenennen-Dialog
     Popup {
         id: renamePopup
+        objectName: "renamePopup"
         modal: true
         dim: true
         focus: true
         x: Math.round((root.width - width) / 2)
         y: Math.round((root.height - height) / 2)
         width: Math.min(root.width - 40, 360)
-        height: 160
+        height: renameCol.implicitHeight + 2 * padding
         padding: 16
         background: Rectangle { color: "#333333"; radius: 10 }
 
         ColumnLayout {
-            anchors.fill: parent
+            id: renameCol
+            anchors.left: parent.left
+            anchors.right: parent.right
             spacing: 12
 
             Label {
@@ -431,18 +436,21 @@ RowLayout {
     // Lösch-Rückfrage beim Fahrzeug
     Popup {
         id: deleteConfirmPopup
+        objectName: "deleteConfirmPopup"
         modal: true
         dim: true
         focus: true
         x: Math.round((root.width - width) / 2)
         y: Math.round((root.height - height) / 2)
         width: Math.min(root.width - 40, 360)
-        height: 170
+        height: deleteCol.implicitHeight + 2 * padding
         padding: 16
         background: Rectangle { color: "#333333"; radius: 10 }
 
         ColumnLayout {
-            anchors.fill: parent
+            id: deleteCol
+            anchors.left: parent.left
+            anchors.right: parent.right
             spacing: 12
 
             Label {
@@ -474,18 +482,21 @@ RowLayout {
     // Alle Einträge löschen: Bestätigung mit automatischer Sicherung
     Popup {
         id: confirmClearPopup
+        objectName: "confirmClearPopup"
         modal: true
         dim: true
         focus: true
         x: Math.round((root.width - width) / 2)
         y: Math.round((root.height - height) / 2)
         width: Math.min(root.width - 40, 360)
-        height: 180
+        height: clearCol.implicitHeight + 2 * padding
         padding: 16
         background: Rectangle { color: "#333333"; radius: 10 }
 
         ColumnLayout {
-            anchors.fill: parent
+            id: clearCol
+            anchors.left: parent.left
+            anchors.right: parent.right
             spacing: 12
 
             Label {
@@ -509,7 +520,7 @@ RowLayout {
                         if (fuelTracker.createBackup()) {
                             fuelTracker.clearAll()
                             confirmClearPopup.close()
-                            root.showMsg(fuelTracker.strings["savedTo"] + "\n" + fuelTracker.backupFiles()[0])
+                            root.showMsg(fuelTracker.strings["savedTo"] + "\n" + (fuelTracker.backupFiles()[0] || ""))
                         } else {
                             confirmClearPopup.close()
                             root.showMsg(fuelTracker.strings["backupFailed"])
@@ -595,18 +606,21 @@ RowLayout {
     // Endgültige Bestätigung einer Wiederherstellung
     Popup {
         id: confirmRestorePopup
+        objectName: "confirmRestorePopup"
         modal: true
         dim: true
         focus: true
         x: Math.round((root.width - width) / 2)
         y: Math.round((root.height - height) / 2)
         width: Math.min(root.width - 40, 360)
-        height: 180
+        height: confirmRestoreCol.implicitHeight + 2 * padding
         padding: 16
         background: Rectangle { color: "#333333"; radius: 10 }
 
         ColumnLayout {
-            anchors.fill: parent
+            id: confirmRestoreCol
+            anchors.left: parent.left
+            anchors.right: parent.right
             spacing: 12
 
             Label {
@@ -642,12 +656,13 @@ RowLayout {
     // Kurzer Hinweis (Toast)
     Popup {
         id: messagePopup
+        objectName: "messagePopup"
         modal: true
         dim: true
         x: Math.round((root.width - width) / 2)
         y: Math.round((root.height - height) / 2)
         width: root.width - 80
-        height: 110
+        height: Math.min(msgLabel.implicitHeight + 2 * padding + 20, Math.round(root.height - 300))
         padding: 12
         closePolicy: Popup.NoAutoClose
         background: Rectangle {
@@ -825,10 +840,16 @@ RowLayout {
                         var km = parseFloat(kmField.text.replace(',', '.'))
                         var lit = parseFloat(litersField.text.replace(',', '.'))
                         var price = parseFloat(priceField.text.replace(',', '.'))
-                        if (isNaN(km) || isNaN(lit) || isNaN(price)) { return }
+                        if (isNaN(km) || isNaN(lit) || isNaN(price)) {
+                            root.showMsg(fuelTracker.strings["invalidNumbers"])
+                            return
+                        }
 
                         var dt = root.parseDate(dateField.text)
-                        if (dt === null) { return }
+                        if (dt === null) {
+                            root.showMsg(fuelTracker.strings["invalidDate"])
+                            return
+                        }
 
                         if (fuelTracker.addEntry(dt, km, lit, price, fullSwitch.checked)) {
                             dateField.text = Qt.formatDateTime(new Date(), "dd.MM.yyyy")

@@ -77,6 +77,8 @@ static const StringEntry kStrings[] = {
     { "savedTo", "Gespeichert unter", "Saved to", "保存場所" },
     { "restoreDone", "Wiederherstellung erfolgreich", "Restore successful", "復元が完了しました" },
     { "backupFailed", "Sicherung fehlgeschlagen", "Backup failed", "バックアップに失敗しました" },
+    { "invalidNumbers", "Bitte gültige Zahlen eingeben", "Please enter valid numbers", "有効な数値を入力してください" },
+    { "invalidDate", "Ungültiges Datum", "Invalid date", "日付が無効です" },
     { "dist", "Distanz", "Distance", "走行距離" },
     { "quantity", "Menge", "Quantity", "数量" },
     { "pricePerUnit", "Preis/Einheit", "Price per unit", "単価" },

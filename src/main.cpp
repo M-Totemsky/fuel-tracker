@@ -1,6 +1,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QQmlError>
 #include <QQuickWindow>
 #include <QDir>
 #include <QFile>
@@ -19,6 +20,12 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName(QString());
 
     QQmlApplicationEngine engine;
+    QObject::connect(&engine, &QQmlApplicationEngine::warnings,
+                     &engine, [](const QList<QQmlError> &warnings) {
+        for (const QQmlError &e : warnings) {
+            qCritical().noquote() << "QML-Warnung:" << e.toString();
+        }
+    });
 
     // Desktop-Override per Umgebungsvariable; sonst QML-Pfad von bin/ aus finden.
     QString qmlPath;
@@ -41,12 +48,18 @@ int main(int argc, char *argv[])
         }
     }
 
+    if (!QFile::exists(qmlPath)) {
+        qCritical() << "QML nicht gefunden:" << qmlPath
+                    << "(Setze FUELTRACKER_QML, um den Pfad vorzugeben.)";
+        return -1;
+    }
+
     FuelTracker tracker;
     engine.rootContext()->setContextProperty("fuelTracker", &tracker);
 
     engine.load(QUrl::fromLocalFile(qmlPath));
     if (engine.rootObjects().isEmpty()) {
-        qCritical() << "QML nicht geladen:" << qmlPath;
+        qCritical() << "QML konnte nicht geladen werden:" << qmlPath;
         return -1;
     }
 

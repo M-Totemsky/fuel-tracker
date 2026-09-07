@@ -83,6 +83,9 @@ static const StringEntry kStrings[] = {
     { "quantity", "Menge", "Quantity", "数量" },
     { "pricePerUnit", "Preis/Einheit", "Price per unit", "単価" },
     { "cost", "Kosten", "Cost", "費用" },
+    { "invalidName", "Bitte einen Namen eingeben", "Please enter a name", "名前を入力してください" },
+    { "vehicleExists", "Dieser Fahrzeugname ist bereits vergeben", "This vehicle name is already taken", "この車両名は既に使われています" },
+    { "saveFailed", "Speichern fehlgeschlagen", "Saving failed", "保存に失敗しました" },
 };
 
 // Antriebs-Tabelle: Neue Antriebsart hier ergänzen
@@ -390,10 +393,26 @@ void FuelTracker::setActiveVehicle(int id)
     emit dataChanged();
 }
 
+bool FuelTracker::vehicleNameExists(const QString &name) const
+{
+    const QString trimmed = name.trimmed();
+    if (trimmed.isEmpty()) return false;
+    QSqlQuery q(m_db);
+    q.exec(QStringLiteral("SELECT name FROM vehicles"));
+    while (q.next()) {
+        if (QString::compare(q.value(0).toString(), trimmed,
+                             Qt::CaseInsensitive) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
 int FuelTracker::addVehicle(const QString &name, int fuelTypeIndex)
 {
     const QString trimmed = name.trimmed();
     if (trimmed.isEmpty()) return -1;
+    if (vehicleNameExists(trimmed)) return -2;
     QStringList types = fuelTypes();
     // Absicherung: ungültiger Index (z. B. -1) → erstes Element
     if (fuelTypeIndex < 0 || fuelTypeIndex >= types.size()) fuelTypeIndex = 0;
@@ -412,6 +431,17 @@ bool FuelTracker::renameVehicle(int id, const QString &name)
 {
     const QString trimmed = name.trimmed();
     if (trimmed.isEmpty()) return false;
+
+    // Duplikat: ein anderes Fahrzeug mit gleichem Namen (Groß/Klein egal)
+    QSqlQuery dup(m_db);
+    dup.exec(QStringLiteral("SELECT id, name FROM vehicles"));
+    while (dup.next()) {
+        if (dup.value(0).toInt() == id) continue;
+        if (QString::compare(dup.value(1).toString(), trimmed,
+                             Qt::CaseInsensitive) == 0) {
+            return false;
+        }
+    }
 
     QSqlQuery q(m_db);
     q.prepare(QStringLiteral("UPDATE vehicles SET name = ? WHERE id = ?"));
@@ -723,14 +753,15 @@ bool FuelTracker::deleteEntry(int id)
     return true;
 }
 
-void FuelTracker::clearAll()
+bool FuelTracker::clearAll()
 {
     QSqlQuery q(m_db);
     q.prepare(QStringLiteral("DELETE FROM entries WHERE vehicle_id = ?"));
     q.addBindValue(m_activeVehicleId);
-    q.exec();
+    if (!q.exec()) return false;
     recompute();
     emit dataChanged();
+    return true;
 }
 
 QString FuelTracker::documentsDir() const

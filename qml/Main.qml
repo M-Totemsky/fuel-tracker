@@ -213,9 +213,14 @@ RowLayout {
                     text: "+"
                     font.pixelSize: 20
                     onClicked: {
-                        if (fuelTracker.addVehicle(newVehicleField.text,
-                                                  fuelTypeCombo.currentIndex) >= 0) {
+                        var r = fuelTracker.addVehicle(newVehicleField.text,
+                                                      fuelTypeCombo.currentIndex)
+                        if (r >= 0) {
                             newVehicleField.text = ""
+                        } else if (r === -2) {
+                            root.showMsg(fuelTracker.strings["vehicleExists"])
+                        } else {
+                            root.showMsg(fuelTracker.strings["invalidName"])
                         }
                     }
                 }
@@ -425,8 +430,15 @@ RowLayout {
                     text: fuelTracker.strings["saveEntry"]
                     highlighted: true
                     onClicked: {
-                        fuelTracker.renameVehicle(root.pendingVehicleId, renameNameField.text)
-                        renamePopup.close()
+                        if (renameNameField.text.trim() === "") {
+                            root.showMsg(fuelTracker.strings["invalidName"])
+                            return
+                        }
+                        if (fuelTracker.renameVehicle(root.pendingVehicleId, renameNameField.text)) {
+                            renamePopup.close()
+                        } else {
+                            root.showMsg(fuelTracker.strings["vehicleExists"])
+                        }
                     }
                 }
             }
@@ -518,9 +530,13 @@ RowLayout {
                     highlighted: true
                     onClicked: {
                         if (fuelTracker.createBackup()) {
-                            fuelTracker.clearAll()
-                            confirmClearPopup.close()
-                            root.showMsg(fuelTracker.strings["savedTo"] + "\n" + (fuelTracker.backupFiles()[0] || ""))
+                            if (fuelTracker.clearAll()) {
+                                confirmClearPopup.close()
+                                root.showMsg(fuelTracker.strings["savedTo"] + "\n" + (fuelTracker.backupFiles()[0] || ""))
+                            } else {
+                                confirmClearPopup.close()
+                                root.showMsg(fuelTracker.strings["saveFailed"])
+                            }
                         } else {
                             confirmClearPopup.close()
                             root.showMsg(fuelTracker.strings["backupFailed"])
@@ -857,6 +873,8 @@ RowLayout {
                             litersField.text = ""
                             priceField.text = ""
                             listView.positionViewAtEnd()
+                        } else {
+                            root.showMsg(fuelTracker.strings["saveFailed"])
                         }
                     }
                 }
@@ -928,6 +946,7 @@ RowLayout {
         Button {
             Layout.fillWidth: true
             text: fuelTracker.strings["deleteAll"]
+            enabled: fuelTracker.entryCount > 0
             onClicked: confirmClearPopup.open()
         }
     }

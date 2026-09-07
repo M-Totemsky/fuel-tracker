@@ -60,7 +60,7 @@ public:
                               double pricePerUnit, // Preis je Liter/Gallone/kWh
                               bool fullTank);
     Q_INVOKABLE bool deleteEntry(int id);
-    Q_INVOKABLE void clearAll();
+    Q_INVOKABLE bool clearAll();
 
     QVariantList entries() const;   // Q_PROPERTY: Liste für QML
 
@@ -71,7 +71,9 @@ public:
     QStringList fuelTypeOptions() const;        // Antriebs-Arten in aktueller Sprache
     QString fuelTypeLabel(const QString &code) const;
     Q_INVOKABLE void setActiveVehicle(int id);
+    Q_INVOKABLE bool vehicleNameExists(const QString &name) const;
     Q_INVOKABLE int addVehicle(const QString &name, int fuelTypeIndex);
+    // addVehicle: >0 Fahrzeug-Id | -1 leer/DB-Fehler | -2 Name schon vergeben
     Q_INVOKABLE bool renameVehicle(int id, const QString &name);
     Q_INVOKABLE bool deleteVehicle(int id);
 

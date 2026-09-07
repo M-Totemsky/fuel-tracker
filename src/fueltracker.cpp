@@ -30,49 +30,50 @@ static bool isValidCurrency(const QString &code)
 }
 
 // Übersetzungstabelle: Neue Texte hier ergänzen (de/en)
-struct StringEntry { const char *key; const char *de; const char *en; };
+struct StringEntry { const char *key; const char *de; const char *en; const char *ja; };
 static const StringEntry kStrings[] = {
-    { "date",       "Datum",                   "Date" },
-    { "today",      "Heute",                   "Today" },
-    { "odometerKm", "km-Stand",                "Odometer (km)" },
-    { "odometerMi", "Meilenstand",             "Odometer (mi)" },
-    { "fullTank",   "Voll getankt",            "Full tank" },
-    { "fullCharge", "Voll geladen",            "Full charge" },
-    { "saveEntry",  "Eintrag speichern",       "Save entry" },
-    { "history",    "Verlauf",                 "History" },
-    { "noEntries",  "Noch keine Einträge",     "No entries yet" },
-    { "deleteAll",  "Alle Einträge löschen",   "Delete all entries" },
-    { "noData",     "Noch keine Daten",        "No data yet" },
-    { "needMore",   "Weitere Tankung nötig",   "Another full tank needed" },
-    { "unitLiter",  "Liter",                   "Liters" },
-    { "unitGallon", "Gallonen",                "Gallons" },
-    { "totalSpend", "Gesamtausgaben",          "Total spent" },
-    { "settings",   "Einstellungen",           "Settings" },
-    { "unitName",   "Einheit",                 "Unit" },
-    { "currencyName", "Währung",               "Currency" },
-    { "languageName", "Sprache",               "Language" },
-    { "close",      "Schließen",               "Close" },
-    { "vehicle",    "Fahrzeug",                "Vehicle" },
-    { "vehicles",   "Fahrzeuge",               "Vehicles" },
-    { "name",       "Name",                    "Name" },
-    { "addVehicle", "Fahrzeug hinzufügen",     "Add vehicle" },
-    { "renameVehicle", "Umbenennen",           "Rename" },
-    { "deleteVehicle", "Löschen",              "Delete" },
-    { "fuelType",   "Antrieb",                 "Fuel type" },
-    { "defaultVehicle", "Fahrzeug 1",          "Vehicle 1" },
-    { "confirmDeleteVehicle", "Fahrzeug und alle zugehörigen Einträge löschen?",
-                         "Delete vehicle and all its entries?" },
-    { "cancel",     "Abbrechen",               "Cancel" },
-    { "yes",        "Ja",                      "Yes" },
-    { "kwhUnit",    "kWh",                     "kWh" },
+    { "date", "Datum", "Date", "日付" },
+    { "today", "Heute", "Today", "今日" },
+    { "odometerKm", "km-Stand", "Odometer (km)", "走行距離(km)" },
+    { "odometerMi", "Meilenstand", "Odometer (mi)", "走行距離(mi)" },
+    { "fullTank", "Voll getankt", "Full tank", "満タン" },
+    { "fullCharge", "Voll geladen", "Full charge", "満充電" },
+    { "saveEntry", "Eintrag speichern", "Save entry", "記録を保存" },
+    { "history", "Verlauf", "History", "履歴" },
+    { "noEntries", "Noch keine Einträge", "No entries yet", "まだ記録がありません" },
+    { "deleteAll", "Alle Einträge löschen", "Delete all entries", "すべての記録を削除" },
+    { "noData", "Noch keine Daten", "No data yet", "データがありません" },
+    { "needMore", "Weitere Tankung nötig", "Another full tank needed", "次の満タンが必要です" },
+    { "unitLiter", "Liter", "Liters", "リットル" },
+    { "unitGallon", "Gallonen", "Gallons", "ガロン" },
+    { "totalSpend", "Gesamtausgaben", "Total spent", "総費用" },
+    { "settings", "Einstellungen", "Settings", "設定" },
+    { "unitName", "Einheit", "Unit", "単位" },
+    { "currencyName", "Währung", "Currency", "通貨" },
+    { "languageName", "Sprache", "Language", "言語" },
+    { "close", "Schließen", "Close", "閉じる" },
+    { "vehicle", "Fahrzeug", "Vehicle", "車両" },
+    { "vehicles", "Fahrzeuge", "Vehicles", "車両" },
+    { "name", "Name", "Name", "名前" },
+    { "addVehicle", "Fahrzeug hinzufügen", "Add vehicle", "車両を追加" },
+    { "renameVehicle", "Umbenennen", "Rename", "名前を変更" },
+    { "deleteVehicle", "Löschen", "Delete", "削除" },
+    { "fuelType", "Antrieb", "Fuel type", "動力" },
+    { "defaultVehicle", "Fahrzeug 1", "Vehicle 1", "車両 1" },
+    { "confirmDeleteVehicle", "Fahrzeug und alle zugehörigen Einträge löschen?", "Delete vehicle and all its entries?", "車両とそのすべての記録を削除しますか？" },
+    { "cancel", "Abbrechen", "Cancel", "キャンセル" },
+    { "yes", "Ja", "Yes", "はい" },
+    { "kwhUnit", "kWh", "kWh", "kWh" },
+    { "unitKm", "Kilometer", "Kilometers", "キロメートル" },
+    { "unitMi", "Meilen", "Miles", "マイル" },
 };
 
 // Antriebs-Tabelle: Neue Antriebsart hier ergänzen
-static const struct { const char *code; const char *de; const char *en; } kFuelTypes[] = {
-    { "petrol",   "Benzin",   "Petrol" },
-    { "diesel",   "Diesel",   "Diesel" },
-    { "lpg",      "LPG",      "LPG" },
-    { "electric", "Elektro",  "Electric" },
+static const struct { const char *code; const char *de; const char *en; const char *ja; } kFuelTypes[] = {
+    { "petrol",   "Benzin",  "Petrol", "ガソリン" },
+    { "diesel",   "Diesel",  "Diesel", "ディーゼル" },
+    { "lpg",   "LPG",  "LPG", "LPG" },
+    { "electric",   "Elektro",  "Electric", "電気" },
 };
 
 static bool isValidFuelType(const QString &code)
@@ -88,6 +89,8 @@ FuelTracker::FuelTracker(QObject *parent)
 {
     if (QLocale::system().language() == QLocale::English) {
         m_language = QStringLiteral("English");
+    } else if (QLocale::system().language() == QLocale::Japanese) {
+        m_language = QStringLiteral("日本語");
     }
     openDatabase();
     loadSettings();
@@ -271,8 +274,10 @@ QString FuelTracker::language() const { return m_language; }
 QString FuelTracker::ls(const QString &key) const
 {
     const bool en = m_language == QStringLiteral("English");
+    const bool ja = m_language == QStringLiteral("日本語");
     for (auto &s : kStrings) {
         if (key == QString::fromUtf8(s.key)) {
+            if (ja) return QString::fromUtf8(s.ja);
             return QString::fromUtf8(en ? s.en : s.de);
         }
     }
@@ -296,9 +301,11 @@ QString FuelTracker::unitLabel() const
 
 QStringList FuelTracker::unitOptions() const
 {
-    QStringList list;
-    list << ls(QStringLiteral("unitLiter")) << ls(QStringLiteral("unitGallon"));
-    return list;
+    // Elektro: keine Mengeneinheit (immer kWh) -> nur Distanz waehlbar
+    if (isElectric()) {
+        return { ls(QStringLiteral("unitKm")), ls(QStringLiteral("unitMi")) };
+    }
+    return { ls(QStringLiteral("unitLiter")), ls(QStringLiteral("unitGallon")) };
 }
 
 QStringList FuelTracker::units() const
@@ -323,8 +330,10 @@ QStringList FuelTracker::fuelTypeOptions() const
 QString FuelTracker::fuelTypeLabel(const QString &code) const
 {
     const bool en = m_language == QStringLiteral("English");
+    const bool ja = m_language == QStringLiteral("日本語");
     for (auto &f : kFuelTypes) {
         if (code == QString::fromUtf8(f.code)) {
+            if (ja) return QString::fromUtf8(f.ja);
             return QString::fromUtf8(en ? f.en : f.de);
         }
     }
@@ -359,6 +368,7 @@ void FuelTracker::setActiveVehicle(int id)
     setActiveVehicleId(id);
     saveSettings();
     recompute();
+    emit settingsChanged();
     emit vehiclesChanged();
     emit dataChanged();
 }
@@ -419,6 +429,7 @@ bool FuelTracker::deleteVehicle(int id)
         saveSettings();
     }
     recompute();
+    emit settingsChanged();
     emit vehiclesChanged();
     emit dataChanged();
     return true;
@@ -433,7 +444,7 @@ QStringList FuelTracker::currencies() const
 
 QStringList FuelTracker::languages() const
 {
-    return { QStringLiteral("Deutsch"), QStringLiteral("English") };
+    return { QStringLiteral("Deutsch"), QStringLiteral("English"), QStringLiteral("日本語") };
 }
 
 void FuelTracker::setUnit(const QString &unit)
@@ -459,7 +470,8 @@ void FuelTracker::setCurrency(const QString &currency)
 void FuelTracker::setLanguage(const QString &language)
 {
     if (m_language == language) return;
-    if (!(language == QStringLiteral("Deutsch") || language == QStringLiteral("English"))) return;
+    if (!(language == QStringLiteral("Deutsch") || language == QStringLiteral("English")
+      || language == QStringLiteral("日本語"))) return;
     m_language = language;
     saveSettings();
     emit languageChanged();
@@ -496,7 +508,8 @@ void FuelTracker::recompute()
     }
 
     const QLocale loc = (m_language == QStringLiteral("English")) ? QLocale::English
-                                                                  : QLocale::German;
+                  : (m_language == QStringLiteral("日本語")) ? QLocale::Japanese
+                  : QLocale::German;
 
     // Voll→Voll: neuester voller Eintrag minus vorheriger voller Eintrag.
     QSqlQuery v(m_db);

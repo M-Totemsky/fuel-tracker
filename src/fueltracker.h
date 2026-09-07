@@ -23,7 +23,7 @@ class FuelTracker : public QObject
     Q_PROPERTY(QStringList units READ units CONSTANT)
     Q_PROPERTY(QStringList currencies READ currencies CONSTANT)
     Q_PROPERTY(QStringList languages READ languages CONSTANT)
-    Q_PROPERTY(QStringList unitOptions READ unitOptions CONSTANT)
+    Q_PROPERTY(QStringList unitOptions READ unitOptions NOTIFY settingsChanged)
     Q_PROPERTY(QVariantList vehicles READ vehicles NOTIFY vehiclesChanged)
     Q_PROPERTY(QString activeVehicleName READ activeVehicleName NOTIFY vehiclesChanged)
     Q_PROPERTY(bool isElectric READ isElectric NOTIFY vehiclesChanged)

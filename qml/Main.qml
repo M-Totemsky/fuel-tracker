@@ -23,7 +23,7 @@ ApplicationWindow {
 
     function fmtNum(x, digits) {
         var s = x.toFixed(digits)
-        return fuelTracker.language === "English" ? s : s.replace('.', ',')
+        return (fuelTracker.language === "English" || fuelTracker.language === "日本語") ? s : s.replace('.', ',')
     }
 
     function fmtMoney(x) {
@@ -256,14 +256,14 @@ RowLayout {
                                     text: fuelTracker.strings["renameVehicle"]
                                     font.pixelSize: 12
                                     background: Rectangle {
-                                        color: root.accent
+                                        color: modelData.isActive ? "#2b2b2b" : "transparent"
                                         radius: 4
                                         implicitWidth: 92
                                         implicitHeight: 32
                                     }
                                     contentItem: Label {
                                         text: fuelTracker.strings["renameVehicle"]
-                                        color: root.accentText
+                                        color: "#ffffff"
                                         font.pixelSize: 12
                                         horizontalAlignment: Text.AlignHCenter
                                         verticalAlignment: Text.AlignVCenter
@@ -278,14 +278,14 @@ RowLayout {
                                     text: fuelTracker.strings["deleteVehicle"]
                                     font.pixelSize: 12
                                     background: Rectangle {
-                                        color: root.accent
+                                        color: modelData.isActive ? "#2b2b2b" : "transparent"
                                         radius: 4
                                         implicitWidth: 92
                                         implicitHeight: 32
                                     }
                                     contentItem: Label {
                                         text: fuelTracker.strings["deleteVehicle"]
-                                        color: root.accentText
+                                        color: "#ffffff"
                                         font.pixelSize: 12
                                         horizontalAlignment: Text.AlignHCenter
                                         verticalAlignment: Text.AlignVCenter
@@ -317,6 +317,7 @@ RowLayout {
 
                     Label { text: fuelTracker.strings["unitName"]; color: "#ffffff" }
                     ComboBox {
+                        objectName: "unitCombo"
                         Layout.fillWidth: true
                         model: fuelTracker.unitOptions
                         currentIndex: fuelTracker.units.indexOf(fuelTracker.unit)
@@ -473,10 +474,6 @@ RowLayout {
                         placeholderText: "TT.MM.JJJJ"
                         color: "#ffffff"
                         inputMethodHints: Qt.ImhDate
-                    }
-                    Button {
-                        text: fuelTracker.strings["today"]
-                        onClicked: dateField.text = Qt.formatDateTime(new Date(), "dd.MM.yyyy")
                     }
                 }
 

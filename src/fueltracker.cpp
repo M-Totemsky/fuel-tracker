@@ -67,6 +67,20 @@ static const StringEntry kStrings[] = {
     { "kwhUnit", "kWh", "kWh", "kWh" },
     { "unitKm", "Kilometer", "Kilometers", "キロメートル" },
     { "unitMi", "Meilen", "Miles", "マイル" },
+    { "data", "Daten", "Data", "データ" },
+    { "csvExport", "CSV-Export", "Export CSV", "CSVエクスポート" },
+    { "createBackup", "Sicherung erstellen", "Create backup", "バックアップを作成" },
+    { "restoreBackup", "Sicherung wiederherstellen", "Restore backup", "バックアップを復元" },
+    { "noBackups", "Keine Sicherungen gefunden", "No backups found", "バックアップが見つかりません" },
+    { "confirmRestore", "Diese Sicherung wiederherstellen? Aktuelle Daten werden ersetzt.", "Restore this backup? Current data will be replaced.", "このバックアップを復元しますか？現在のデータは置き換えられます。" },
+    { "confirmClearAll", "Alle Einträge löschen? Es wird automatisch eine Sicherung erstellt.", "Delete all entries? A backup will be created automatically.", "すべての記録を削除しますか？バックアップは自動的に作成されます。" },
+    { "savedTo", "Gespeichert unter", "Saved to", "保存場所" },
+    { "restoreDone", "Wiederherstellung erfolgreich", "Restore successful", "復元が完了しました" },
+    { "backupFailed", "Sicherung fehlgeschlagen", "Backup failed", "バックアップに失敗しました" },
+    { "dist", "Distanz", "Distance", "走行距離" },
+    { "quantity", "Menge", "Quantity", "数量" },
+    { "pricePerUnit", "Preis/Einheit", "Price per unit", "単価" },
+    { "cost", "Kosten", "Cost", "費用" },
 };
 
 // Antriebs-Tabelle: Neue Antriebsart hier ergänzen
@@ -715,4 +729,210 @@ void FuelTracker::clearAll()
     q.exec();
     recompute();
     emit dataChanged();
+}
+
+QString FuelTracker::documentsDir() const
+{
+    QString dir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    if (dir.isEmpty()) dir = QDir::homePath() + QStringLiteral("/Documents");
+    QDir().mkpath(dir);
+    return dir;
+}
+
+QString FuelTracker::stamp(bool withSeconds) const
+{
+    return withSeconds
+        ? QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd_HH-mm-ss"))
+        : QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd_HH-mm"));
+}
+
+QString FuelTracker::createBackup()
+{
+    const QString src = m_db.databaseName();
+    if (src.isEmpty()) return QString();
+
+    QString dst = documentsDir() + QStringLiteral("/fuel-tracker-backup-")
+                + stamp(false) + QStringLiteral(".sqlite");
+    if (QFile::exists(dst)) {
+        dst = documentsDir() + QStringLiteral("/fuel-tracker-backup-")
+            + stamp(true) + QStringLiteral(".sqlite");
+    }
+    return QFile::copy(src, dst) ? dst : QString();
+}
+
+QStringList FuelTracker::backupFiles()
+{
+    QStringList list;
+    const QDir dir(documentsDir());
+    const auto files = dir.entryList({ QStringLiteral("fuel-tracker-backup-*.sqlite") },
+                                     QDir::Files, QDir::Time | QDir::Reversed);
+    for (const QString &f : files) list << dir.filePath(f);
+    return list;
+}
+
+bool FuelTracker::validDbFile(const QString &path) const
+{
+    if (!QFile::exists(path)) return false;
+    {
+        QSqlDatabase chk = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"),
+                                                     QStringLiteral("tmpchk"));
+        chk.setDatabaseName(path);
+        if (!chk.open()) {
+            QSqlDatabase::removeDatabase(QStringLiteral("tmpchk"));
+            return false;
+        }
+        QSqlQuery q(chk);
+        q.exec(QStringLiteral(
+            "SELECT name FROM sqlite_master WHERE type='table' "
+            "AND name IN ('entries','vehicles')"));
+        int found = 0;
+        while (q.next()) ++found;
+        chk.close();
+        QSqlDatabase::removeDatabase(QStringLiteral("tmpchk"));
+        return found == 2;
+    }
+}
+
+bool FuelTracker::restoreBackup(const QString &backupPath)
+{
+    if (!validDbFile(backupPath)) return false;
+
+    // Zur Sicherheit aktuelle Daten sichern, bevor sie ersetzt werden
+    createBackup();
+
+    m_db.close();
+    const QString dbPath = m_db.databaseName();
+    QFile::remove(dbPath);
+    if (!QFile::copy(backupPath, dbPath) || !m_db.open()) {
+        m_db.open();
+        ensureDefaultVehicle();
+        qWarning() << "restoreBackup: copy or reopen failed";
+        return false;
+    }
+
+    loadSettings();
+    ensureDefaultVehicle();
+    loadActiveVehicle();
+    recompute();
+
+    emit languageChanged();
+    emit settingsChanged();
+    emit vehiclesChanged();
+    emit dataChanged();
+    return true;
+}
+
+bool FuelTracker::exportCsv()
+{
+    const QString dir = documentsDir();
+    QString path = dir + QStringLiteral("/fuel-tracker-export-")
+                 + stamp(false) + QStringLiteral(".csv");
+    if (QFile::exists(path)) {
+        path = dir + QStringLiteral("/fuel-tracker-export-")
+             + stamp(true) + QStringLiteral(".csv");
+    }
+
+    QFile f(path);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) return false;
+
+    const bool de = m_language == QStringLiteral("Deutsch");
+    const bool ja = m_language == QStringLiteral("日本語");
+    const QString sep = de ? QStringLiteral(";") : QStringLiteral(",");
+    const QLocale loc = de ? QLocale::German
+                           : (ja ? QLocale::Japanese : QLocale::English);
+
+    QTextStream out(&f);
+    out.setCodec("UTF-8");
+    out << QChar(0xFEFF);   // BOM, damit Excel UTF-8 erkennt
+
+    auto csvField = [&](const QString &raw) {
+        if (raw.contains(sep) || raw.contains('"') ||
+            raw.contains('\n') || raw.contains('\r')) {
+            QString e = raw;
+            e.replace(QStringLiteral("\""), QStringLiteral("\"\""));
+            return QStringLiteral("\"%1\"").arg(e);
+        }
+        return raw;
+    };
+
+    auto cell = [&](const QString &raw) { return csvField(raw) + sep; };
+    const QString nl = QStringLiteral("\r\n");
+
+    // Kopfzeile
+    QString line;
+    line += cell(ls(QStringLiteral("date")));
+    line += cell(ls(QStringLiteral("vehicle")));
+    line += cell(ls(QStringLiteral("dist")));
+    line += cell(ls(QStringLiteral("quantity")));
+    line += cell(ls(QStringLiteral("unitName")));
+    line += cell(ls(QStringLiteral("pricePerUnit")));
+    line += cell(ls(QStringLiteral("cost")));
+    line += csvField(ls(QStringLiteral("fullTank")));
+    out << line << nl;
+
+    const bool gallons = m_unit == QStringLiteral("Gallonen");
+    QSqlQuery q(m_db);
+    q.exec(QStringLiteral(
+        "SELECT id, name, fuel_type FROM vehicles ORDER BY id"));
+    while (q.next()) {
+        const int vid = q.value(0).toInt();
+        const QString vname = q.value(1).toString();
+        const bool isEv = q.value(2).toString() == QStringLiteral("electric");
+
+        QSqlQuery e(m_db);
+        e.prepare(QStringLiteral(
+            "SELECT date, km, liters, price_per_liter, full_tank FROM entries "
+            "WHERE vehicle_id = ? ORDER BY date ASC, id ASC"));
+        e.addBindValue(vid);
+        e.exec();
+        while (e.next()) {
+            const double kmStored = e.value(1).toDouble();
+            const double amountStored = e.value(2).toDouble();
+            const double priceStored = e.value(3).toDouble();
+
+            // Anzeige-Werte wie in der Liste (Mischung EV/Verbrenner)
+            QString amountUnit;
+            double amount;
+            double price;
+            if (isEv) {
+                amountUnit = QStringLiteral("kWh");
+                amount = amountStored;
+                price = priceStored;
+            } else if (gallons) {
+                amountUnit = QStringLiteral("gal");
+                amount = amountStored / LITER_PER_GALLON;
+                price = priceStored * LITER_PER_GALLON;
+            } else {
+                amountUnit = QStringLiteral("l");
+                amount = amountStored;
+                price = priceStored;
+            }
+            double km = kmStored;
+            if (gallons && !isEv) km = kmStored / KM_PER_MILE;
+
+            const QDateTime dt = QDateTime::fromString(e.value(0).toString(),
+                                                       Qt::ISODateWithMs);
+            QStringList cells;
+            cells << (dt.isValid()
+                          ? dt.toString(QStringLiteral("yyyy-MM-dd"))
+                          : e.value(0).toString());
+            cells << vname;
+            cells << loc.toString(km, 'f', 0);
+            cells << loc.toString(amount, 'f', 2);
+            cells << amountUnit;
+            cells << loc.toString(price, 'f', 2);
+            cells << loc.toString(amountStored * priceStored, 'f', 2);
+            cells << (e.value(4).toBool() ? QStringLiteral("1") : QStringLiteral("0"));
+
+            line.clear();
+            for (int i = 0; i < cells.size(); ++i) {
+                line += (i == cells.size() - 1)
+                            ? csvField(cells.at(i))
+                            : csvField(cells.at(i)) + sep;
+            }
+            out << line << nl;
+        }
+    }
+
+    return true;
 }

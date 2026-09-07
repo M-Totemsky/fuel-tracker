@@ -11,6 +11,14 @@ ApplicationWindow {
     color: "#1e1e1e"
 
     property int pendingVehicleId: -1   // für Umbenennen/Löschen-Dialog
+    property string pendingBackupPath: ""
+    property var backups: []
+
+    function showMsg(text) {
+        msgLabel.text = text
+        msgTimer.restart()
+        if (!messagePopup.opened) messagePopup.open()
+    }
 
     // Akzentfarbe wie im App-Icon (knallig gelb) + passende Textfarbe
     property color accent: "#FFD400"
@@ -324,6 +332,37 @@ RowLayout {
                         onActivated: function(i) { fuelTracker.setUnit(fuelTracker.units[i]) }
                     }
 
+                    Label { text: fuelTracker.strings["data"]; color: "#ffffff" }
+                    Button {
+                        objectName: "csvExportBtn"
+                        Layout.fillWidth: true
+                        text: fuelTracker.strings["csvExport"]
+                        onClicked: {
+                            var p = fuelTracker.exportCsv()
+                            root.showMsg(p ? fuelTracker.strings["savedTo"] + "\n" + p
+                                           : fuelTracker.strings["backupFailed"])
+                        }
+                    }
+                    Button {
+                        objectName: "createBackupBtn"
+                        Layout.fillWidth: true
+                        text: fuelTracker.strings["createBackup"]
+                        onClicked: {
+                            var p = fuelTracker.createBackup()
+                            root.showMsg(p ? fuelTracker.strings["savedTo"] + "\n" + p
+                                           : fuelTracker.strings["backupFailed"])
+                        }
+                    }
+                    Button {
+                        objectName: "restoreBackupBtn"
+                        Layout.fillWidth: true
+                        text: fuelTracker.strings["restoreBackup"]
+                        onClicked: {
+                            root.backups = fuelTracker.backupFiles()
+                            restorePopup.open()
+                        }
+                    }
+
                     Item { Layout.fillHeight: true }
                 }
             }
@@ -417,6 +456,200 @@ RowLayout {
                     }
                 }
             }
+        }
+    }
+
+    // Alle Einträge löschen: Bestätigung mit automatischer Sicherung
+    Popup {
+        id: confirmClearPopup
+        modal: true
+        dim: true
+        focus: true
+        x: Math.round((root.width - width) / 2)
+        y: Math.round((root.height - height) / 2)
+        width: Math.min(root.width - 40, 360)
+        height: 180
+        padding: 16
+        background: Rectangle { color: "#333333"; radius: 10 }
+
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 12
+
+            Label {
+                text: fuelTracker.activeVehicleName + "\n" + fuelTracker.strings["confirmClearAll"]
+                color: "#ffffff"
+                font.pixelSize: 15
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+            }
+            Item { Layout.fillHeight: true }
+            RowLayout {
+                Item { Layout.fillWidth: true }
+                Button {
+                    text: fuelTracker.strings["cancel"]
+                    onClicked: confirmClearPopup.close()
+                }
+                Button {
+                    text: fuelTracker.strings["yes"]
+                    highlighted: true
+                    onClicked: {
+                        if (fuelTracker.createBackup()) {
+                            fuelTracker.clearAll()
+                            confirmClearPopup.close()
+                            root.showMsg(fuelTracker.strings["savedTo"] + "\n" + fuelTracker.backupFiles()[0])
+                        } else {
+                            confirmClearPopup.close()
+                            root.showMsg(fuelTracker.strings["backupFailed"])
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Sicherung wiederherstellen: Auswahl der gefundenen Sicherungen
+    Popup {
+        id: restorePopup
+        modal: true
+        dim: true
+        focus: true
+        x: Math.round((root.width - width) / 2)
+        y: Math.round((root.height - height) / 2)
+        width: Math.min(root.width - 40, 370)
+        height: 380
+        padding: 16
+        background: Rectangle { color: "#333333"; radius: 10 }
+
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 10
+
+            RowLayout {
+                Label {
+                    text: fuelTracker.strings["restoreBackup"]
+                    color: "#ffffff"
+                    font.pixelSize: 16
+                    font.bold: true
+                }
+                Item { Layout.fillWidth: true }
+                ToolButton {
+                    text: "✕"
+                    onClicked: restorePopup.close()
+                    contentItem: Label {
+                        text: "✕"
+                        color: "#ffffff"
+                        font.pixelSize: 16
+                    }
+                }
+            }
+
+            Label {
+                text: fuelTracker.strings["noBackups"]
+                color: "#999999"
+                visible: root.backups.length === 0
+            }
+
+            ListView {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                model: root.backups
+                delegate: Button {
+                    width: ListView.view.width
+                    Layout.preferredHeight: 44
+                    text: modelData.split('/').pop()
+                    font.pixelSize: 13
+                    onClicked: {
+                        root.pendingBackupPath = modelData
+                        restorePopup.close()
+                        confirmRestorePopup.open()
+                    }
+                }
+                ScrollBar.vertical: ScrollBar {}
+            }
+        }
+    }
+
+    // Endgültige Bestätigung einer Wiederherstellung
+    Popup {
+        id: confirmRestorePopup
+        modal: true
+        dim: true
+        focus: true
+        x: Math.round((root.width - width) / 2)
+        y: Math.round((root.height - height) / 2)
+        width: Math.min(root.width - 40, 360)
+        height: 180
+        padding: 16
+        background: Rectangle { color: "#333333"; radius: 10 }
+
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 12
+
+            Label {
+                text: fuelTracker.strings["confirmRestore"] + "\n\n" + root.pendingBackupPath.split('/').pop()
+                color: "#ffffff"
+                font.pixelSize: 15
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+            }
+            Item { Layout.fillHeight: true }
+            RowLayout {
+                Item { Layout.fillWidth: true }
+                Button {
+                    text: fuelTracker.strings["cancel"]
+                    onClicked: confirmRestorePopup.close()
+                }
+                Button {
+                    text: fuelTracker.strings["yes"]
+                    highlighted: true
+                    onClicked: {
+                        confirmRestorePopup.close()
+                        if (fuelTracker.restoreBackup(root.pendingBackupPath)) {
+                            root.showMsg(fuelTracker.strings["restoreDone"])
+                        } else {
+                            root.showMsg(fuelTracker.strings["backupFailed"])
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Kurzer Hinweis (Toast)
+    Popup {
+        id: messagePopup
+        modal: true
+        dim: true
+        x: Math.round((root.width - width) / 2)
+        y: Math.round((root.height - height) / 2)
+        width: root.width - 80
+        height: 110
+        padding: 12
+        closePolicy: Popup.NoAutoClose
+        background: Rectangle {
+            color: "#222222"
+            radius: 8
+            border.color: "#555555"
+            border.width: 1
+        }
+        Label {
+            id: msgLabel
+            anchors.fill: parent
+            anchors.margins: 10
+            text: ""
+            color: "#ffffff"
+            font.pixelSize: 13
+            wrapMode: Text.WordWrap
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+        Timer {
+            id: msgTimer
+            interval: 2600
+            onTriggered: messagePopup.close()
         }
     }
 
@@ -644,7 +877,7 @@ RowLayout {
         Button {
             Layout.fillWidth: true
             text: fuelTracker.strings["deleteAll"]
-            onClicked: fuelTracker.clearAll()
+            onClicked: confirmClearPopup.open()
         }
     }
 }

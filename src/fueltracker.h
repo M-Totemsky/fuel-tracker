@@ -75,6 +75,11 @@ public:
     Q_INVOKABLE bool renameVehicle(int id, const QString &name);
     Q_INVOKABLE bool deleteVehicle(int id);
 
+    Q_INVOKABLE QString createBackup();      // DB-Sicherung nach ~/Dokumente
+    Q_INVOKABLE QStringList backupFiles();   // vorhandene Sicherungen (neueste zuerst)
+    Q_INVOKABLE bool restoreBackup(const QString &backupPath);
+    Q_INVOKABLE bool exportCsv();            // CSV aller Fahrzeuge nach ~/Dokumente
+
 signals:
     void dataChanged();
     void settingsChanged();
@@ -90,6 +95,10 @@ private:
     void loadActiveVehicle();
     void setActiveVehicleId(int id);
     int firstVehicleId() const;
+
+    QString documentsDir() const;      // ~/Dokumente (erzeugt falls nötig)
+    QString stamp(bool withSeconds) const;
+    bool validDbFile(const QString &path) const;
 
     QSqlDatabase m_db;
     double m_lastConsumption = 0.0;

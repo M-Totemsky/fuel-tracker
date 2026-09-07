@@ -1,4 +1,6 @@
 {
   "policy_version": "$ENV{APPARMOR_POLICY}",
-  "policy_groups": []
+  "policy_groups": [],
+  "read_path": ["~/Documents/"],
+  "write_path": ["~/Documents/"]
 }

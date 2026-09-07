@@ -577,6 +577,16 @@ void FuelTracker::recompute()
                             .arg(loc.toString(m_lastCostPerKm, 'f', 2))
                             .arg(sym)
                             .arg(QStringLiteral("mi"));
+    } else if (m_language == QStringLiteral("日本語")) {
+        // Japan: Verbrauch ueblicherweise als km/L (gefahrene Kilometer je Liter)
+        double kmPerL = lit2 > 0 ? diffKm / lit2 : 0.0;
+        m_lastConsumption = kmPerL;
+        m_lastCostPerKm = (lit2 * price2) / diffKm;  // Währung/km
+        m_lastSummary = QStringLiteral("%1 km/L · %2 %3/%4")
+                            .arg(loc.toString(kmPerL, 'f', 1))
+                            .arg(loc.toString(m_lastCostPerKm, 'f', 2))
+                            .arg(sym)
+                            .arg(QStringLiteral("km"));
     } else {
         m_lastConsumption = per100;
         m_lastCostPerKm = (lit2 * price2) / diffKm;  // Währung/km

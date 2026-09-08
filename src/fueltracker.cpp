@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QStandardPaths>
 #include <QDir>
+#include <QFile>
 #include <QVariantMap>
 #include <QLocale>
 
@@ -766,8 +767,13 @@ bool FuelTracker::clearAll()
 
 QString FuelTracker::documentsDir() const
 {
-    QString dir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-    if (dir.isEmpty()) dir = QDir::homePath() + QStringLiteral("/Documents");
+    QString dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    const QByteArray xdg = qgetenv("XDG_DATA_HOME");
+    if (!xdg.isEmpty()) {
+        dir = QString::fromLocal8Bit(xdg) + QStringLiteral("/fuel-tracker");
+    }
+    if (dir.isEmpty()) dir = QDir::homePath() + QStringLiteral("/.local/share/fuel-tracker");
+    dir += QStringLiteral("/documents");
     QDir().mkpath(dir);
     return dir;
 }

@@ -1,4 +1,4 @@
 {
   "policy_version": "$ENV{APPARMOR_POLICY}",
-  "policy_groups": ["document_files"]
+  "policy_groups": []
 }

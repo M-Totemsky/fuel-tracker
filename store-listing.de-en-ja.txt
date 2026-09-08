@@ -1,0 +1,83 @@
+========================================
+FUEL TRACKER - OpenStore-LISTING-TEXTE
+(Beschreibungen zum Kopieren in das Formular)
+========================================
+
+--------------------------------------------------
+KURZBESCHREIBUNG (Short description)
+--------------------------------------------------
+
+EN:
+Record fuel and energy data for several vehicles; consumption (l/100km) and cost per km are calculated automatically.
+
+DE:
+Tankdaten und Kosten für mehrere Fahrzeuge erfassen, Verbrauch (l/100km) und Kosten je km automatisch berechnen.
+
+JA:
+複数の車両の給油・充電データを記録し、燃費と走行コストを自動計算。
+
+--------------------------------------------------
+LANGE BESCHREIBUNG (Long description)
+--------------------------------------------------
+
+EN:
+Fuel Tracker keeps track of refuellings and costs for several vehicles at a glance. Consumption (l/100km, km/l or kWh/100km) and cost per km are calculated automatically from your entries using the familiar full-tank method.
+
+Features:
+- multiple vehicles with their own fuel type (petrol, diesel, electric etc.)
+- entries with date, quantity, price per unit and "full tank" marker
+- automatic consumption and cost calculation
+- settings for currency (EUR, USD, JPY ...), units (litres/gallons) and Japanese vehicle standards
+- CSV export, database backup and restore
+- German, English and Japanese
+- slim, touch-friendly design made for Ubuntu Touch
+
+DE:
+Fuel Tracker erfasst Tankfüllungen und Kosten für mehrere Fahrzeuge im Überblick. Verbrauch (l/100km, km/l oder kWh/100km) und Kosten (je km) werden automatisch aus den Eingaben nach dem Volltank-Prinzip berechnet.
+
+Funktionen:
+- mehrere Fahrzeuge mit eigener Antriebsart (Benzin, Diesel, Elektro …)
+- Einträge mit Datum, Menge, Preis/Einheit und "voll getankt"-Kennzeichnung
+- automatische Verbrauchs- und Kostenberechnung
+- Einstellungen für Währung (€, $, ¥ …), Einheiten (Liter/Gallonen) und japanische Fahrzeugstandards
+- CSV-Export, Datenbank-Sicherung und -Wiederherstellung
+- Deutsch, Englisch und Japanisch
+- schlankes, effizientes Design für Ubuntu Touch
+
+JA:
+Fuel Tracker は、複数の車両の給油・充電データとコストをひと目で管理できるアプリです。フルタンク方式で入力したデータから、燃費（l/100km、km/l、kWh/100km）と 1km あたりのコストを自動計算します。
+
+機能：
+・複数の車両を燃料タイプ別に管理（ガソリン、ディーゼル、電気…）
+・日付・数量・単価・満タン入力をサポート
+・燃費とコストの自動計算
+・通貨（€、$、¥…）・単位（リットル/ガロン）・日本仕様表示に対応
+・CSV エクスポート、データベースのバックアップと復元
+・日本語・英語・ドイツ語に対応
+・Ubuntu Touch 向けの軽量で扱いやすいデザイン
+
+--------------------------------------------------
+CHANGELOG / VERSIONSHINWEISE (0.4.0)
+--------------------------------------------------
+
+EN:
+0.4.0: Duplicate and empty vehicle names are now blocked with a clear message, saving errors are reported, "delete all" is safer.
+
+DE:
+0.4.0: Doppelte und leere Fahrzeugnamen werden mit klarer Meldung blockiert, Speicherfehler werden angezeigt, "Alle löschen" ist abgesichert.
+
+JA:
+0.4.0：重複・空の車両名をメッセージ付きでブロック、保存エラーの通知、「全削除」を安全化。
+
+--------------------------------------------------
+EMPFEHLUNGEN FÜR DIE EINGABE
+--------------------------------------------------
+
+Name im Store:  Fuel Tracker
+Kategorie:      Tools
+Lizenz:         MIT (oder GPL-3.0 - eigene Wahl)
+Tags (optional): fuel, vehicle, car, mileage, consumption
+Screenshots:    3 Portrait-Bilder:
+                 1) Eintrag-Formular mit Daten
+                 2) Übersichtsliste deiner Fahrzeuge mit Verbrauch
+                 3) Einstellungen

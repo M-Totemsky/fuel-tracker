@@ -771,7 +771,9 @@ RowLayout {
                         id: kmField
                         Layout.fillWidth: true
                         inputMethodHints: Qt.ImhDigitsOnly
-                        placeholderText: fuelTracker.language === "English" ? "e.g. 124350" : "z. B. 124350"
+                        placeholderText: fuelTracker.language === "English" ? "e.g. 124350"
+                            : fuelTracker.language === "Čeština" ? "např. 124350"
+                            : "z. B. 124350"
                     }
                 }
 
@@ -787,7 +789,9 @@ RowLayout {
                         inputMethodHints: Qt.ImhFormattedNumbersOnly
                         placeholderText: fuelTracker.language === "English"
                             ? (fuelTracker.isElectric ? "e.g. 50" : (fuelTracker.unit === "Gallonen" ? "e.g. 10.5" : "e.g. 42.5"))
-                            : (fuelTracker.isElectric ? "z. B. 50" : (fuelTracker.unit === "Gallonen" ? "z. B. 10,5" : "z. B. 42,5"))
+                            : fuelTracker.language === "Čeština"
+                                ? (fuelTracker.isElectric ? "např. 50" : (fuelTracker.unit === "Gallonen" ? "např. 10,5" : "např. 42,5"))
+                                : (fuelTracker.isElectric ? "z. B. 50" : (fuelTracker.unit === "Gallonen" ? "z. B. 10,5" : "z. B. 42,5"))
                     }
                 }
 
@@ -804,7 +808,9 @@ RowLayout {
                         inputMethodHints: Qt.ImhFormattedNumbersOnly
                         placeholderText: fuelTracker.language === "English"
                             ? (fuelTracker.isElectric ? "e.g. 0.45" : "e.g. 1.819")
-                            : (fuelTracker.isElectric ? "z. B. 0,45" : "z. B. 1,819")
+                            : fuelTracker.language === "Čeština"
+                                ? (fuelTracker.isElectric ? "např. 6,50" : "např. 34,90")
+                                : (fuelTracker.isElectric ? "z. B. 0,45" : "z. B. 1,819")
                     }
                 }
 

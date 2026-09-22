@@ -21,6 +21,7 @@ static const CurrencyInfo kCurrencies[] = {
     { "GBP", "£" },
     { "ZAR", "R" },
     { "JPY", "¥" },
+    { "CZK", "Kč" },
 };
 
 static bool isValidCurrency(const QString &code)
@@ -32,69 +33,69 @@ static bool isValidCurrency(const QString &code)
 }
 
 // Übersetzungstabelle: Neue Texte hier ergänzen (de/en)
-struct StringEntry { const char *key; const char *de; const char *en; const char *ja; };
+struct StringEntry { const char *key; const char *de; const char *en; const char *ja; const char *cs; };
 static const StringEntry kStrings[] = {
-    { "date", "Datum", "Date", "日付" },
-    { "today", "Heute", "Today", "今日" },
-    { "odometerKm", "km-Stand", "Odometer (km)", "走行距離(km)" },
-    { "odometerMi", "Meilenstand", "Odometer (mi)", "走行距離(mi)" },
-    { "fullTank", "Voll getankt", "Full tank", "満タン" },
-    { "fullCharge", "Voll geladen", "Full charge", "満充電" },
-    { "saveEntry", "Eintrag speichern", "Save entry", "記録を保存" },
-    { "history", "Verlauf", "History", "履歴" },
-    { "noEntries", "Noch keine Einträge", "No entries yet", "まだ記録がありません" },
-    { "deleteAll", "Alle Einträge löschen", "Delete all entries", "すべての記録を削除" },
-    { "noData", "Noch keine Daten", "No data yet", "データがありません" },
-    { "needMore", "Weitere Tankung nötig", "Another full tank needed", "次の満タンが必要です" },
-    { "unitLiter", "Liter", "Liters", "リットル" },
-    { "unitGallon", "Gallonen", "Gallons", "ガロン" },
-    { "totalSpend", "Gesamtausgaben", "Total spent", "総費用" },
-    { "settings", "Einstellungen", "Settings", "設定" },
-    { "unitName", "Einheit", "Unit", "単位" },
-    { "currencyName", "Währung", "Currency", "通貨" },
-    { "languageName", "Sprache", "Language", "言語" },
-    { "close", "Schließen", "Close", "閉じる" },
-    { "vehicle", "Fahrzeug", "Vehicle", "車両" },
-    { "vehicles", "Fahrzeuge", "Vehicles", "車両" },
-    { "name", "Name", "Name", "名前" },
-    { "addVehicle", "Fahrzeug hinzufügen", "Add vehicle", "車両を追加" },
-    { "renameVehicle", "Umbenennen", "Rename", "名前を変更" },
-    { "deleteVehicle", "Löschen", "Delete", "削除" },
-    { "fuelType", "Antrieb", "Fuel type", "動力" },
-    { "defaultVehicle", "Fahrzeug 1", "Vehicle 1", "車両 1" },
-    { "confirmDeleteVehicle", "Fahrzeug und alle zugehörigen Einträge löschen?", "Delete vehicle and all its entries?", "車両とそのすべての記録を削除しますか？" },
-    { "cancel", "Abbrechen", "Cancel", "キャンセル" },
-    { "yes", "Ja", "Yes", "はい" },
-    { "kwhUnit", "kWh", "kWh", "kWh" },
-    { "unitKm", "Kilometer", "Kilometers", "キロメートル" },
-    { "unitMi", "Meilen", "Miles", "マイル" },
-    { "data", "Daten", "Data", "データ" },
-    { "csvExport", "CSV-Export", "Export CSV", "CSVエクスポート" },
-    { "createBackup", "Sicherung erstellen", "Create backup", "バックアップを作成" },
-    { "restoreBackup", "Sicherung wiederherstellen", "Restore backup", "バックアップを復元" },
-    { "noBackups", "Keine Sicherungen gefunden", "No backups found", "バックアップが見つかりません" },
-    { "confirmRestore", "Diese Sicherung wiederherstellen? Aktuelle Daten werden ersetzt.", "Restore this backup? Current data will be replaced.", "このバックアップを復元しますか？現在のデータは置き換えられます。" },
-    { "confirmClearAll", "Alle Einträge löschen? Es wird automatisch eine Sicherung erstellt.", "Delete all entries? A backup will be created automatically.", "すべての記録を削除しますか？バックアップは自動的に作成されます。" },
-    { "savedTo", "Gespeichert unter", "Saved to", "保存場所" },
-    { "restoreDone", "Wiederherstellung erfolgreich", "Restore successful", "復元が完了しました" },
-    { "backupFailed", "Sicherung fehlgeschlagen", "Backup failed", "バックアップに失敗しました" },
-    { "invalidNumbers", "Bitte gültige Zahlen eingeben", "Please enter valid numbers", "有効な数値を入力してください" },
-    { "invalidDate", "Ungültiges Datum", "Invalid date", "日付が無効です" },
-    { "dist", "Distanz", "Distance", "走行距離" },
-    { "quantity", "Menge", "Quantity", "数量" },
-    { "pricePerUnit", "Preis/Einheit", "Price per unit", "単価" },
-    { "cost", "Kosten", "Cost", "費用" },
-    { "invalidName", "Bitte einen Namen eingeben", "Please enter a name", "名前を入力してください" },
-    { "vehicleExists", "Dieser Fahrzeugname ist bereits vergeben", "This vehicle name is already taken", "この車両名は既に使われています" },
-    { "saveFailed", "Speichern fehlgeschlagen", "Saving failed", "保存に失敗しました" },
+    { "date", "Datum", "Date", "日付", "Datum" },
+    { "today", "Heute", "Today", "今日", "Dnes" },
+    { "odometerKm", "km-Stand", "Odometer (km)", "走行距離(km)", "Stav km" },
+    { "odometerMi", "Meilenstand", "Odometer (mi)", "走行距離(mi)", "Stav míle" },
+    { "fullTank", "Voll getankt", "Full tank", "満タン", "Plná" },
+    { "fullCharge", "Voll geladen", "Full charge", "満充電", "Plně nabito" },
+    { "saveEntry", "Eintrag speichern", "Save entry", "記録を保存", "Uložit záznam" },
+    { "history", "Verlauf", "History", "履歴", "Historie" },
+    { "noEntries", "Noch keine Einträge", "No entries yet", "まだ記録がありません", "Žádné záznamy" },
+    { "deleteAll", "Alle Einträge löschen", "Delete all entries", "すべての記録を削除", "Smazat vše" },
+    { "noData", "Noch keine Daten", "No data yet", "データがありません", "Žádná data" },
+    { "needMore", "Weitere Tankung nötig", "Another full tank needed", "次の満タンが必要です", "Další nádrž" },
+    { "unitLiter", "Liter", "Liters", "リットル", "Litry" },
+    { "unitGallon", "Gallonen", "Gallons", "ガロン", "Galony" },
+    { "totalSpend", "Gesamtausgaben", "Total spent", "総費用", "Celkové náklady" },
+    { "settings", "Einstellungen", "Settings", "設定", "Nastavení" },
+    { "unitName", "Einheit", "Unit", "単位", "Jednotky" },
+    { "currencyName", "Währung", "Currency", "通貨", "Měna" },
+    { "languageName", "Sprache", "Language", "言語", "Jazyk" },
+    { "close", "Schließen", "Close", "閉じる", "Zavřít" },
+    { "vehicle", "Fahrzeug", "Vehicle", "車両", "Vozidlo" },
+    { "vehicles", "Fahrzeuge", "Vehicles", "車両", "Vozidla" },
+    { "name", "Name", "Name", "名前", "Jméno" },
+    { "addVehicle", "Fahrzeug hinzufügen", "Add vehicle", "車両を追加", "Přidat vozidlo" },
+    { "renameVehicle", "Umbenennen", "Rename", "名前を変更", "Přejmenovat" },
+    { "deleteVehicle", "Löschen", "Delete", "削除", "Smazat" },
+    { "fuelType", "Antrieb", "Fuel type", "動力", "Typ paliva" },
+    { "defaultVehicle", "Fahrzeug 1", "Vehicle 1", "車両 1", "Vozidlo 1" },
+    { "confirmDeleteVehicle", "Fahrzeug und alle zugehörigen Einträge löschen?", "Delete vehicle and all its entries?", "車両とそのすべての記録を削除しますか？", "Smazat vozidlo a všechny záznamy" },
+    { "cancel", "Abbrechen", "Cancel", "キャンセル", "Zrušit" },
+    { "yes", "Ja", "Yes", "はい", "Ano" },
+    { "kwhUnit", "kWh", "kWh", "kWh", "kWh" },
+    { "unitKm", "Kilometer", "Kilometers", "キロメートル", "Kilometry" },
+    { "unitMi", "Meilen", "Miles", "マイル", "Míle" },
+    { "data", "Daten", "Data", "データ", "Data" },
+    { "csvExport", "CSV-Export", "Export CSV", "CSVエクスポート", "Exportovat CSV" },
+    { "createBackup", "Sicherung erstellen", "Create backup", "バックアップを作成", "Vytvořit zálohu" },
+    { "restoreBackup", "Sicherung wiederherstellen", "Restore backup", "バックアップを復元", "Obnovit zálohu" },
+    { "noBackups", "Keine Sicherungen gefunden", "No backups found", "バックアップが見つかりません", "Nebyly nalezeny žádné zálohy" },
+    { "confirmRestore", "Diese Sicherung wiederherstellen? Aktuelle Daten werden ersetzt.", "Restore this backup? Current data will be replaced.", "このバックアップを復元しますか？現在のデータは置き換えられます。", "Obnovit a nadradit" },
+    { "confirmClearAll", "Alle Einträge löschen? Es wird automatisch eine Sicherung erstellt.", "Delete all entries? A backup will be created automatically.", "すべての記録を削除しますか？バックアップは自動的に作成されます。", "Odstranit všechny záznamy? Automaticky se vytvoří záloha." },
+    { "savedTo", "Gespeichert unter", "Saved to", "保存場所", "Uloženo do" },
+    { "restoreDone", "Wiederherstellung erfolgreich", "Restore successful", "復元が完了しました", "Obnovení proběhlo úspěšně" },
+    { "backupFailed", "Sicherung fehlgeschlagen", "Backup failed", "バックアップに失敗しました", "Záloha selhala" },
+    { "invalidNumbers", "Bitte gültige Zahlen eingeben", "Please enter valid numbers", "有効な数値を入力してください", "Zadejte prosím platná čísla" },
+    { "invalidDate", "Ungültiges Datum", "Invalid date", "日付が無効です", "Špatné datum" },
+    { "dist", "Distanz", "Distance", "走行距離", "Vzdálenost" },
+    { "quantity", "Menge", "Quantity", "数量", "Množství" },
+    { "pricePerUnit", "Preis/Einheit", "Price per unit", "単価", "Cena za jednotku" },
+    { "cost", "Kosten", "Cost", "費用", "Cena" },
+    { "invalidName", "Bitte einen Namen eingeben", "Please enter a name", "名前を入力してください", "Zadejte prosím jméno" },
+    { "vehicleExists", "Dieser Fahrzeugname ist bereits vergeben", "This vehicle name is already taken", "この車両名は既に使われています", "Tento název je již obsazený" },
+    { "saveFailed", "Speichern fehlgeschlagen", "Saving failed", "保存に失敗しました", "Uložení se nezdařilo" },
 };
 
 // Antriebs-Tabelle: Neue Antriebsart hier ergänzen
-static const struct { const char *code; const char *de; const char *en; const char *ja; } kFuelTypes[] = {
-    { "petrol",   "Benzin",  "Petrol", "ガソリン" },
-    { "diesel",   "Diesel",  "Diesel", "ディーゼル" },
-    { "lpg",   "LPG",  "LPG", "LPG" },
-    { "electric",   "Elektro",  "Electric", "電気" },
+static const struct { const char *code; const char *de; const char *en; const char *ja; const char *cs; } kFuelTypes[] = {
+    { "petrol",   "Benzin",  "Petrol", "ガソリン", "Benzín" },
+    { "diesel",   "Diesel",  "Diesel", "ディーゼル", "Nafta" },
+    { "lpg",   "LPG",  "LPG", "LPG", "LPG" },
+    { "electric",   "Elektro",  "Electric", "電気", "Elektro" },
 };
 
 static bool isValidFuelType(const QString &code)
@@ -108,7 +109,9 @@ static bool isValidFuelType(const QString &code)
 FuelTracker::FuelTracker(QObject *parent)
     : QObject(parent)
 {
-    if (QLocale::system().language() == QLocale::English) {
+    if (QLocale::system().language() == QLocale::Czech) {
+        m_language = QStringLiteral("Čeština");
+    } else if (QLocale::system().language() == QLocale::English) {
         m_language = QStringLiteral("English");
     } else if (QLocale::system().language() == QLocale::Japanese) {
         m_language = QStringLiteral("日本語");
@@ -296,9 +299,11 @@ QString FuelTracker::ls(const QString &key) const
 {
     const bool en = m_language == QStringLiteral("English");
     const bool ja = m_language == QStringLiteral("日本語");
+    const bool cs = m_language == QStringLiteral("Čeština");
     for (auto &s : kStrings) {
         if (key == QString::fromUtf8(s.key)) {
             if (ja) return QString::fromUtf8(s.ja);
+            if (cs) return QString::fromUtf8(s.cs);
             return QString::fromUtf8(en ? s.en : s.de);
         }
     }
@@ -352,8 +357,10 @@ QString FuelTracker::fuelTypeLabel(const QString &code) const
 {
     const bool en = m_language == QStringLiteral("English");
     const bool ja = m_language == QStringLiteral("日本語");
+    const bool cs = m_language == QStringLiteral("Čeština");
     for (auto &f : kFuelTypes) {
         if (code == QString::fromUtf8(f.code)) {
+            if (cs) return QString::fromUtf8(f.cs);
             if (ja) return QString::fromUtf8(f.ja);
             return QString::fromUtf8(en ? f.en : f.de);
         }
@@ -492,7 +499,7 @@ QStringList FuelTracker::currencies() const
 
 QStringList FuelTracker::languages() const
 {
-    return { QStringLiteral("Deutsch"), QStringLiteral("English"), QStringLiteral("日本語") };
+    return { QStringLiteral("Deutsch"), QStringLiteral("English"), QStringLiteral("日本語"), QStringLiteral("Čeština") };
 }
 
 void FuelTracker::setUnit(const QString &unit)
@@ -519,7 +526,7 @@ void FuelTracker::setLanguage(const QString &language)
 {
     if (m_language == language) return;
     if (!(language == QStringLiteral("Deutsch") || language == QStringLiteral("English")
-      || language == QStringLiteral("日本語"))) return;
+      || language == QStringLiteral("Čeština") || language == QStringLiteral("日本語"))) return;
     m_language = language;
     saveSettings();
     emit languageChanged();
@@ -557,6 +564,7 @@ void FuelTracker::recompute()
 
     const QLocale loc = (m_language == QStringLiteral("English")) ? QLocale::English
                   : (m_language == QStringLiteral("日本語")) ? QLocale::Japanese
+                  : (m_language == QStringLiteral("Čeština")) ? QLocale::Czech
                   : QLocale::German;
 
     // Voll→Voll: neuester voller Eintrag minus vorheriger voller Eintrag.
@@ -875,10 +883,12 @@ bool FuelTracker::exportCsv()
     if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) return false;
 
     const bool de = m_language == QStringLiteral("Deutsch");
+    const bool cs = m_language == QStringLiteral("Čeština");
     const bool ja = m_language == QStringLiteral("日本語");
-    const QString sep = de ? QStringLiteral(";") : QStringLiteral(",");
+    const QString sep = (de || cs) ? QStringLiteral(";") : QStringLiteral(",");
     const QLocale loc = de ? QLocale::German
-                           : (ja ? QLocale::Japanese : QLocale::English);
+                       : (cs ? QLocale::Czech
+                             : (ja ? QLocale::Japanese : QLocale::English));
 
     QTextStream out(&f);
     out.setCodec("UTF-8");
